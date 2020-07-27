@@ -76,6 +76,7 @@ int native_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
 	info.type = X86_IRQ_ALLOC_TYPE_MSI;
 	info.msi_dev = dev;
 
+	//指定需要申请的domain
 	domain = irq_remapping_get_irq_domain(&info);
 	if (domain == NULL)
 		domain = msi_default_domain;
@@ -102,6 +103,7 @@ static int pci_msi_prepare(struct irq_domain *domain, struct device *dev,
 	struct pci_dev *pdev = to_pci_dev(dev);
 	struct msi_desc *desc = first_pci_msi_entry(pdev);
 
+	//设置msi_alloc_info_t中的mask为空
 	init_irq_alloc_info(arg, NULL);
 	arg->msi_dev = pdev;
 	if (desc->msi_attrib.is_msix) {
@@ -139,6 +141,7 @@ void arch_init_msi_domain(struct irq_domain *parent)
 	if (disable_apic)
 		return;
 
+	//创建了msi默认的domain
 	msi_default_domain = pci_msi_create_irq_domain(NULL,
 					&pci_msi_domain_info, parent);
 	if (!msi_default_domain)
@@ -156,6 +159,7 @@ static struct irq_chip pci_msi_ir_controller = {
 	.flags			= IRQCHIP_SKIP_SET_WAKE,
 };
 
+//ir(interrupt remap)中断映射域信息
 static struct msi_domain_info pci_msi_ir_domain_info = {
 	.flags		= MSI_FLAG_USE_DEF_DOM_OPS | MSI_FLAG_USE_DEF_CHIP_OPS |
 			  MSI_FLAG_MULTI_PCI_MSI | MSI_FLAG_PCI_MSIX,

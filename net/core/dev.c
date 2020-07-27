@@ -5047,6 +5047,7 @@ struct net_device *netdev_master_upper_dev_get(struct net_device *dev)
 	if (list_empty(&dev->adj_list.upper))
 		return NULL;
 
+	//因为在放的时候确保master放在链的最前边
 	upper = list_first_entry(&dev->adj_list.upper,
 				 struct netdev_adjacent, list);
 	if (likely(upper->master))
@@ -5303,6 +5304,7 @@ static int __netdev_adjacent_dev_insert(struct net_device *dev,
 	}
 
 	/* Ensure that master link is always the first item in list. */
+	/* upper与master 之间还有区别 */
 	if (master) {
 		ret = sysfs_create_link(&(dev->dev.kobj),
 					&(adj_dev->dev.kobj), "master");
@@ -5370,11 +5372,13 @@ static int __netdev_adjacent_dev_link_lists(struct net_device *dev,
 {
 	int ret;
 
+	//插入子设备到主设备
 	ret = __netdev_adjacent_dev_insert(dev, upper_dev, ref_nr, up_list,
 					   private, master);
 	if (ret)
 		return ret;
 
+	//插入主设备到子设备
 	ret = __netdev_adjacent_dev_insert(upper_dev, dev, ref_nr, down_list,
 					   private, false);
 	if (ret) {
@@ -5385,13 +5389,14 @@ static int __netdev_adjacent_dev_link_lists(struct net_device *dev,
 	return 0;
 }
 
+//此处是将dev插入到all_adj_list中
 static int __netdev_adjacent_dev_link(struct net_device *dev,
 				      struct net_device *upper_dev,
 				      u16 ref_nr)
 {
 	return __netdev_adjacent_dev_link_lists(dev, upper_dev, ref_nr,
-						&dev->all_adj_list.upper,
-						&upper_dev->all_adj_list.lower,
+						&dev->all_adj_list.upper,		// all_adj_list
+						&upper_dev->all_adj_list.lower,	// all_adj_list
 						NULL, false);
 }
 
@@ -5414,15 +5419,18 @@ static void __netdev_adjacent_dev_unlink(struct net_device *dev,
 					   &upper_dev->all_adj_list.lower);
 }
 
+//该函数将dev、upper_dev之间的adj_list, all_adj_list之间全部建立了联系
 static int __netdev_adjacent_dev_link_neighbour(struct net_device *dev,
 						struct net_device *upper_dev,
 						void *private, bool master)
 {
+	//该函数中操作的是 all_adj_list
 	int ret = __netdev_adjacent_dev_link(dev, upper_dev, 1);
 
 	if (ret)
 		return ret;
-
+	
+	//此处操作的是 adj_list
 	ret = __netdev_adjacent_dev_link_lists(dev, upper_dev, 1,
 					       &dev->adj_list.upper,
 					       &upper_dev->adj_list.lower,
@@ -5584,6 +5592,9 @@ EXPORT_SYMBOL(netdev_upper_dev_link);
  * might be linked as well. The caller must hold the RTNL lock.
  * On a failure a negative errno code is returned. On success the reference
  * counts are adjusted and the function returns zero.
+ */
+/**
+ * 此处的dev为实际的物理口，upper_dev为桥设备
  */
 int netdev_master_upper_dev_link(struct net_device *dev,
 				 struct net_device *upper_dev)

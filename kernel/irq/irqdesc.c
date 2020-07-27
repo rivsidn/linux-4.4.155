@@ -192,6 +192,7 @@ static void free_desc(unsigned int irq)
 	kfree(desc);
 }
 
+//申请 irq_desc 结构体
 static int alloc_descs(unsigned int start, unsigned int cnt, int node,
 		       struct module *owner)
 {
@@ -418,6 +419,7 @@ EXPORT_SYMBOL_GPL(irq_free_descs);
 
 /**
  * irq_alloc_descs - allocate and initialize a range of irq descriptors
+ * 					 申请并初始化一些irq描述符
  * @irq:	Allocate for specific irq number if irq >= 0
  * @from:	Start the search from this irq number
  * @cnt:	Number of consecutive irqs to allocate.
@@ -444,6 +446,10 @@ __irq_alloc_descs(int irq, unsigned int from, unsigned int cnt, int node,
 		 * For interrupts which are freely allocated the
 		 * architecture can force a lower bound to the @from
 		 * argument. x86 uses this to exclude the GSI space.
+		 *
+		 * TODO:???
+		 * GSI: Global System Interrupt
+		 * 		全局系统中断
 		 */
 		from = arch_dynirq_lower_bound(from);
 	}

@@ -16,6 +16,7 @@ typedef struct cpumask { DECLARE_BITMAP(bits, NR_CPUS); } cpumask_t;
 
 /**
  * cpumask_bits - get the bits in a cpumask
+ * 				- 获取cpumask的bits
  * @maskp: the struct cpumask *
  *
  * You should only assume nr_cpu_ids bits of this mask are valid.  This is
@@ -284,6 +285,7 @@ static inline void cpumask_clear_cpu(int cpu, struct cpumask *dstp)
 
 /**
  * cpumask_test_cpu - test for a cpu in a cpumask
+ * 					- 检查cpu号是不是在一个cpumask内
  * @cpu: cpu number (< nr_cpu_ids)
  * @cpumask: the cpumask pointer
  *
@@ -425,6 +427,7 @@ static inline bool cpumask_equal(const struct cpumask *src1p,
 
 /**
  * cpumask_intersects - (*src1p & *src2p) != 0
+ * 					  - 有交集返回true; 其他返回false
  * @src1p: the first input
  * @src2p: the second input
  */
@@ -437,6 +440,7 @@ static inline bool cpumask_intersects(const struct cpumask *src1p,
 
 /**
  * cpumask_subset - (*src1p & ~*src2p) == 0
+ * 				  - src1p是src2p的子集返回true;其他返回false
  * @src1p: the first input
  * @src2p: the second input
  *
@@ -541,6 +545,7 @@ static inline void cpumask_copy(struct cpumask *dstp,
 
 /**
  * cpumask_of - the cpumask containing just a given cpu
+ * 			  - 只包含一个cpu的cpu掩码
  * @cpu: the cpu (<= nr_cpu_ids)
  */
 #define cpumask_of(cpu) (get_cpu_mask(cpu))
@@ -755,6 +760,7 @@ static inline int __check_is_bitmap(const unsigned long *bitmap)
 
 /*
  * Special-case data structure for "single bit set only" constant CPU masks.
+ * 特殊情况的数据结构,仅由于只设置一个cpu的cpu掩码
  *
  * We pre-generate all the 64 (or 32) possible bit positions, with enough
  * padding to the left and the right, and return the constant pointer

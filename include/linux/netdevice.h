@@ -1565,11 +1565,13 @@ struct net_device {
 	struct list_head	ptype_all;
 	struct list_head	ptype_specific;
 
+	//与直接相连的设备建立联系
 	struct {
 		struct list_head upper;
 		struct list_head lower;
 	} adj_list;
 
+	//与间接相连的设备建立联系
 	struct {
 		struct list_head upper;
 		struct list_head lower;

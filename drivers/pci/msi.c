@@ -1258,6 +1258,7 @@ static void pci_msi_domain_update_chip_ops(struct msi_domain_info *info)
 
 /**
  * pci_msi_create_irq_domain - Create a MSI interrupt domain
+ * 							 - 创建一个MSI中断域
  * @fwnode:	Optional fwnode of the interrupt controller
  * @info:	MSI domain info
  * @parent:	Parent irq domain

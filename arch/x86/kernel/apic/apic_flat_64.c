@@ -149,6 +149,7 @@ static int flat_phys_pkg_id(int initial_apic_id, int index_msb)
 	return initial_apic_id >> index_msb;
 }
 
+/* 检测是否采用这种模式,默认模式 */
 static int flat_probe(void)
 {
 	return 1;
@@ -251,8 +252,10 @@ static void physflat_send_IPI_all(int vector)
 	physflat_send_IPI_mask(cpu_online_mask, vector);
 }
 
+/* 检测是否采用这种模式 */
 static int physflat_probe(void)
 {
+	/* 手动设置或者cpu大于8个时,采用这种模式 */
 	if (apic == &apic_physflat || num_possible_cpus() > 8)
 		return 1;
 
@@ -260,7 +263,6 @@ static int physflat_probe(void)
 }
 
 static struct apic apic_physflat =  {
-
 	.name				= "physical flat",
 	.probe				= physflat_probe,
 	.acpi_madt_oem_check		= physflat_acpi_madt_oem_check,
@@ -313,3 +315,4 @@ static struct apic apic_physflat =  {
  * We need to check for physflat first, so this order is important.
  */
 apic_drivers(apic_physflat, apic_flat);
+

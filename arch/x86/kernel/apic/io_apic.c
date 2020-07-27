@@ -2338,6 +2338,8 @@ static int io_apic_get_redir_entries(int ioapic)
 	return reg_01.bits.entries + 1;
 }
 
+//TODO: GSI 这个是做什么用的?
+//GSI: Global System Interrupt 为每个中断源指定一个唯一的中断号
 unsigned int arch_dynirq_lower_bound(unsigned int from)
 {
 	/*

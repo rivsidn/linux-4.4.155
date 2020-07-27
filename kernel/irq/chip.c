@@ -140,6 +140,7 @@ int irq_set_msi_desc(unsigned int irq, struct msi_desc *entry)
 
 /**
  *	irq_set_chip_data - set irq chip data for an irq
+ *					  - 为某个中断设置中断芯片的信息
  *	@irq:	Interrupt number
  *	@data:	Pointer to chip specific data
  *

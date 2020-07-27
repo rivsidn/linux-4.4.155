@@ -14,6 +14,7 @@ struct pt_regs;
 
 /**
  * struct irq_desc - interrupt descriptor
+ * 				   - 中断描述符
  * @irq_common_data:	per irq and chip data passed down to chip functions
  * @kstat_irqs:		irq stats per cpu
  * @handle_irq:		highlevel irq-events handler

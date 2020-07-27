@@ -132,6 +132,9 @@ extern unsigned long bitmap_find_next_zero_area_off(unsigned long *map,
  * The @align_mask should be one less than a power of 2; the effect is that
  * the bit offset of all zero areas this function finds is multiples of that
  * power of 2. A @align_mask of 0 means no alignment is required.
+ *
+ * @align_mask 应该是2的幂减1; 通过这个参数对齐.
+ * @align_mask 为0表示不需要对齐.
  */
 static inline unsigned long
 bitmap_find_next_zero_area(unsigned long *map,

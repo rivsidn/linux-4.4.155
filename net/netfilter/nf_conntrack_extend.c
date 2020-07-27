@@ -73,6 +73,7 @@ nf_ct_ext_create(struct nf_ct_ext **ext, enum nf_ct_ext_id id,
 	return (void *)(*ext) + off;
 }
 
+/* 有则返回，没有则添加 */
 void *__nf_ct_ext_add_length(struct nf_conn *ct, enum nf_ct_ext_id id,
 			     size_t var_alloc_len, gfp_t gfp)
 {

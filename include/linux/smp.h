@@ -162,6 +162,7 @@ static inline void smp_init(void) { }
 
 /*
  * smp_processor_id(): get the current CPU ID.
+ * 					 : 获取当前的CPU号
  *
  * if DEBUG_PREEMPT is enabled then we check whether it is
  * used in a preemption-safe way. (smp_processor_id() is safe

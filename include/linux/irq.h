@@ -134,6 +134,7 @@ struct irq_domain;
  * @node:		node index useful for balancing
  * @handler_data:	per-IRQ data for the irq_chip methods
  * @affinity:		IRQ affinity on SMP
+ * 					SMP中的中断亲和性
  * @msi_desc:		MSI descriptor
  */
 struct irq_common_data {
@@ -148,15 +149,22 @@ struct irq_common_data {
 
 /**
  * struct irq_data - per irq chip data passed down to chip functions
+ * 				   - 每个中断芯片的数据，用于传递给芯片相关函数
  * @mask:		precomputed bitmask for accessing the chip registers
  * @irq:		interrupt number
+ * 				中断号
  * @hwirq:		hardware interrupt number, local to the interrupt domain
+ * 				硬件中断号,属于中断域
  * @common:		point to data shared by all irqchips
+ * 				指向所有中断芯片的共享数据
  * @chip:		low level interrupt hardware access
+ * 				底层中断硬件访问
  * @domain:		Interrupt translation domain; responsible for mapping
  *			between hwirq number and linux irq number.
+ *				中断转化域,用于硬件中断号和linux中断号映射.
  * @parent_data:	pointer to parent struct irq_data to support hierarchy
  *			irq_domain
+ *					指向父节点的irq_data结构体用于支持irq_domain分级
  * @chip_data:		platform-specific per-chip private data for the chip
  *			methods, to allow shared chip implementations
  */
@@ -180,12 +188,14 @@ struct irq_data {
  * IRQD_SETAFFINITY_PENDING	- Affinity setting is pending
  * IRQD_NO_BALANCING		- Balancing disabled for this IRQ
  * IRQD_PER_CPU			- Interrupt is per cpu
+ * 						- 中断是每cpu
  * IRQD_AFFINITY_SET		- Interrupt affinity was set
  * IRQD_LEVEL			- Interrupt is level triggered
  * IRQD_WAKEUP_STATE		- Interrupt is configured for wakeup
  *				  from suspend
  * IRDQ_MOVE_PCNTXT		- Interrupt can be moved in process
  *				  context
+ *				  		- 中断能够在进程上下文中迁移
  * IRQD_IRQ_DISABLED		- Disabled state of the interrupt
  * IRQD_IRQ_MASKED		- Masked state of the interrupt
  * IRQD_IRQ_INPROGRESS		- In progress state of the interrupt
@@ -306,6 +316,7 @@ static inline irq_hw_number_t irqd_to_hwirq(struct irq_data *d)
 
 /**
  * struct irq_chip - hardware interrupt chip descriptor
+ * 				   - 硬件中断芯片描述符
  *
  * @name:		name for /proc/interrupts
  * @irq_startup:	start up the interrupt (defaults to ->enable if NULL)
@@ -314,6 +325,7 @@ static inline irq_hw_number_t irqd_to_hwirq(struct irq_data *d)
  * @irq_disable:	disable the interrupt
  * @irq_ack:		start of a new interrupt
  * @irq_mask:		mask an interrupt source
+ * 					屏蔽中断源
  * @irq_mask_ack:	ack and mask an interrupt source
  * @irq_unmask:		unmask an interrupt source
  * @irq_eoi:		end of interrupt

@@ -281,6 +281,7 @@ struct apic {
 	int dest_logical;
 	unsigned long (*check_apicid_used)(physid_mask_t *map, int apicid);
 
+	//vector 申请域,retmask 为输出参数
 	void (*vector_allocation_domain)(int cpu, struct cpumask *retmask,
 					 const struct cpumask *mask);
 	void (*init_apic_ldr)(void);

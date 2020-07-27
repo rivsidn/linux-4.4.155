@@ -57,6 +57,7 @@ static unsigned long _find_next_bit(const unsigned long *addr,
 #ifndef find_next_bit
 /*
  * Find the next set bit in a memory region.
+ * 在内存区域中查找下一个设置了的位
  */
 unsigned long find_next_bit(const unsigned long *addr, unsigned long size,
 			    unsigned long offset)

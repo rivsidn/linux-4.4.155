@@ -426,6 +426,7 @@ int check_irq_vectors_for_cpu_disable(void)
 }
 
 /* A cpu has been removed from cpu_online_mask.  Reset irq affinities. */
+/* 一个cpu从cpu_online_mask中移除了，重设中断affinities   fixup修复 */
 void fixup_irqs(void)
 {
 	unsigned int irq, vector;
@@ -435,7 +436,9 @@ void fixup_irqs(void)
 	struct irq_chip *chip;
 	int ret;
 
-	for_each_irq_desc(irq, desc) {
+	//每个CPU的 vector_irq[vector] 对应一个 irq_desc 结构体
+	//当CPU 停止运行之后,相应的 irq_desc 需要处理
+	for_each_irq_desc(irq, desc) {			//遍历每个 irq_desc{}
 		int break_affinity = 0;
 		int set_affinity = 1;
 		const struct cpumask *affinity;
@@ -446,12 +449,16 @@ void fixup_irqs(void)
 			continue;
 
 		/* interrupt's are disabled at this point */
+		/* 此时中断是关闭的 */
 		raw_spin_lock(&desc->lock);
 
 		data = irq_desc_get_irq_data(desc);
 		affinity = irq_data_get_affinity_mask(data);
+		//中断没有对应的处理函数;
+		//每CPU中断;
+		//中断亲和性是在线cpu的子集;  此时不需要作处理
 		if (!irq_has_action(irq) || irqd_is_per_cpu(data) ||
-		    cpumask_subset(affinity, cpu_online_mask)) {
+		    cpumask_subset(affinity, cpu_online_mask)) {		//几种不需要处理的情况
 			raw_spin_unlock(&desc->lock);
 			continue;
 		}
@@ -460,18 +467,24 @@ void fixup_irqs(void)
 		 * Complete the irq move. This cpu is going down and for
 		 * non intr-remapping case, we can't wait till this interrupt
 		 * arrives at this cpu before completing the irq move.
+		 * 
+		 * 完成中断转移
 		 */
 		irq_force_complete_move(desc);
 
 		if (cpumask_any_and(affinity, cpu_online_mask) >= nr_cpu_ids) {
+			//affinity & cpu_online_mask = 0 没有重合的位
+			//该情况是异常的,表示相应该中断的cpu从 cpu_online_mask 中移除了
 			break_affinity = 1;
 			affinity = cpu_online_mask;
 		}
 
-		chip = irq_data_get_irq_chip(data);
+		chip = irq_data_get_irq_chip(data/*irq_data*/);
 		/*
 		 * The interrupt descriptor might have been cleaned up
 		 * already, but it is not yet removed from the radix tree
+		 *
+		 * 这个中断描述符可能已经清理了,但是还没从radix tree中移除
 		 */
 		if (!chip) {
 			raw_spin_unlock(&desc->lock);
@@ -479,12 +492,13 @@ void fixup_irqs(void)
 		}
 
 		if (!irqd_can_move_in_process_context(data) && chip->irq_mask)
-			chip->irq_mask(data);
+			chip->irq_mask(data);		//屏蔽中断
 
 		if (chip->irq_set_affinity) {
 			ret = chip->irq_set_affinity(data, affinity, true);
 			if (ret == -ENOSPC)
-				pr_crit("IRQ %d set affinity failed because there are no available vectors.  The device assigned to this IRQ is unstable.\n", irq);
+				pr_crit("IRQ %d set affinity failed because there are no available vectors.  "
+						"The device assigned to this IRQ is unstable.\n", irq);
 		} else {
 			if (!(warned++))
 				set_affinity = 0;
@@ -497,7 +511,7 @@ void fixup_irqs(void)
 		 */
 		if (!irqd_can_move_in_process_context(data) &&
 		    !irqd_irq_masked(data) && chip->irq_unmask)
-			chip->irq_unmask(data);
+			chip->irq_unmask(data);		//取消屏蔽
 
 		raw_spin_unlock(&desc->lock);
 
@@ -508,7 +522,7 @@ void fixup_irqs(void)
 	}
 
 	/*
-	 * We can remove mdelay() and then send spuriuous interrupts to
+	 * We can remove mdelay() and then send spurious interrupts to
 	 * new cpu targets for all the irqs that were handled previously by
 	 * this cpu. While it works, I have seen spurious interrupt messages
 	 * (nothing wrong but still...).
@@ -522,6 +536,8 @@ void fixup_irqs(void)
 	 * We can walk the vector array of this cpu without holding
 	 * vector_lock because the cpu is already marked !online, so
 	 * nothing else will touch it.
+	 * 可以在没获取锁的情况下遍历该cpu的向量数组,因为该cpu已经被标记
+	 * 为掉线,所以不会有其他地方访问该变量.
 	 */
 	for (vector = FIRST_EXTERNAL_VECTOR; vector < NR_VECTORS; vector++) {
 		unsigned int irr;
@@ -529,6 +545,7 @@ void fixup_irqs(void)
 		if (IS_ERR_OR_NULL(__this_cpu_read(vector_irq[vector])))
 			continue;
 
+		//读取IRR(中断请求寄存器),向 new_target cpu发送中断
 		irr = apic_read(APIC_IRR + (vector / 32 * 0x10));
 		if (irr  & (1 << (vector % 32))) {
 			desc = __this_cpu_read(vector_irq[vector]);
@@ -537,13 +554,15 @@ void fixup_irqs(void)
 			data = irq_desc_get_irq_data(desc);
 			chip = irq_data_get_irq_chip(data);
 			if (chip->irq_retrigger) {
-				chip->irq_retrigger(data);
+				chip->irq_retrigger(data);		//重新触发中断
 				__this_cpu_write(vector_irq[vector], VECTOR_RETRIGGERED);
 			}
 			raw_spin_unlock(&desc->lock);
 		}
+		//如果不是重触发状态,设置该中断向量无效
 		if (__this_cpu_read(vector_irq[vector]) != VECTOR_RETRIGGERED)
 			__this_cpu_write(vector_irq[vector], VECTOR_UNUSED);
 	}
 }
 #endif
+

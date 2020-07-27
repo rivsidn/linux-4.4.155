@@ -363,6 +363,7 @@ ipt_do_table(struct sk_buff *skb,
 			continue;
 		}
 
+		/* ipt_entry 对应的是一条iptables规则 */
 		xt_ematch_foreach(ematch, e) {
 			acpar.match     = ematch->u.kernel.match;
 			acpar.matchinfo = ematch->data;

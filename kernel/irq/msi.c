@@ -279,6 +279,10 @@ int msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev,
 	for_each_msi_entry(desc, dev) {
 		ops->set_desc(&arg, desc);
 
+		/* 
+		 * 此处的arg作为后边assign_irq_vector_policy()中的info, 当info不为空
+		 * 且info->mask不为空时,向与mask对应的cpu上申请中断.
+		 */
 		virq = __irq_domain_alloc_irqs(domain, -1, desc->nvec_used,
 					       dev_to_node(dev), &arg, false);
 		if (virq < 0) {

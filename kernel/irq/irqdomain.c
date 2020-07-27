@@ -36,10 +36,13 @@ struct irqchip_fwid {
 /**
  * irq_domain_alloc_fwnode - Allocate a fwnode_handle suitable for
  *                           identifying an irq domain
+ *                           申请一个合适的fwnode_handle用于识别irq domain
  * @data: optional user-provided data
+ * 		  用户提供的数据,可选
  *
  * Allocate a struct device_node, and return a poiner to the embedded
  * fwnode_handle (or NULL on failure).
+ * 申请一个device_node结构体,返回内嵌的fwnode_handle指针(失败返回0)
  */
 struct fwnode_handle *irq_domain_alloc_fwnode(void *data)
 {
@@ -65,6 +68,7 @@ struct fwnode_handle *irq_domain_alloc_fwnode(void *data)
  * irq_domain_free_fwnode - Free a non-OF-backed fwnode_handle
  *
  * Free a fwnode_handle allocated with irq_domain_alloc_fwnode.
+ * 释放irq_domain_alloc_fwnode 申请的fwnode_handle 结构体
  */
 void irq_domain_free_fwnode(struct fwnode_handle *fwnode)
 {
@@ -80,6 +84,7 @@ void irq_domain_free_fwnode(struct fwnode_handle *fwnode)
 
 /**
  * __irq_domain_add() - Allocate a new irq_domain data structure
+ * 						申请一个新的irq_domain结构体
  * @of_node: optional device-tree node of the interrupt controller
  * @size: Size of linear map; 0 for radix mapping only
  * @hwirq_max: Maximum number of interrupts supported by controller
@@ -106,6 +111,7 @@ struct irq_domain *__irq_domain_add(struct fwnode_handle *fwnode, int size,
 	if (WARN_ON(!domain))
 		return NULL;
 
+	//TODO: 这个of node有什么特殊意义
 	of_node_get(of_node);
 
 	/* Fill structure */
@@ -119,7 +125,7 @@ struct irq_domain *__irq_domain_add(struct fwnode_handle *fwnode, int size,
 	irq_domain_check_hierarchy(domain);
 
 	mutex_lock(&irq_domain_mutex);
-	list_add(&domain->link, &irq_domain_list);
+	list_add(&domain->link, &irq_domain_list);	//加入到irq_domain_list中
 	mutex_unlock(&irq_domain_mutex);
 
 	pr_debug("Added domain %s\n", domain->name);
@@ -134,6 +140,8 @@ EXPORT_SYMBOL_GPL(__irq_domain_add);
  * This routine is used to remove an irq domain. The caller must ensure
  * that all mappings within the domain have been disposed of prior to
  * use, depending on the revmap type.
+ * 该程序用于移除irq domain, 调用者必须要确保domain 中所有的映射已经提前
+ * 处理.
  */
 void irq_domain_remove(struct irq_domain *domain)
 {
@@ -165,7 +173,9 @@ EXPORT_SYMBOL_GPL(irq_domain_remove);
 
 /**
  * irq_domain_add_simple() - Register an irq_domain and optionally map a range of irqs
+ * 							 注册一个irq_domain; 映射一部分中断(可选)
  * @of_node: pointer to interrupt controller's device tree node.
+ * 			 中断控制器设备树节点指针
  * @size: total number of irqs in mapping
  * @first_irq: first number of irq block assigned to the domain,
  *	pass zero to assign irqs on-the-fly. If first_irq is non-zero, then
@@ -176,10 +186,18 @@ EXPORT_SYMBOL_GPL(irq_domain_remove);
  * Allocates an irq_domain, and optionally if first_irq is positive then also
  * allocate irq_descs and map all of the hwirqs to virqs starting at first_irq.
  *
+ * 申请一个 irq_domain, 当first_irq是正数时, 申请irq_descs 结构体并映射从first_irq
+ * 开始的所有hwirqs 到virqs.
+ *
  * This is intended to implement the expected behaviour for most
  * interrupt controllers. If device tree is used, then first_irq will be 0 and
  * irqs get mapped dynamically on the fly. However, if the controller requires
  * static virq assignments (non-DT boot) then it will set that up correctly.
+ *
+ * 该函数用于实现大多数中断控制器期望的功能.如果用了设备树, first_irq 被设置成 0
+ * 中断在运行时被动态的映射;如果控制器需要动态的virq分配, first_irq 会被正确设置.
+ *
+ * TODO: non-DT boot
  */
 struct irq_domain *irq_domain_add_simple(struct device_node *of_node,
 					 unsigned int size,
@@ -189,10 +207,12 @@ struct irq_domain *irq_domain_add_simple(struct device_node *of_node,
 {
 	struct irq_domain *domain;
 
+	//创建
 	domain = __irq_domain_add(of_node_to_fwnode(of_node), size, size, 0, ops, host_data);
 	if (!domain)
 		return NULL;
 
+	//添加映射
 	if (first_irq > 0) {
 		if (IS_ENABLED(CONFIG_SPARSE_IRQ)) {
 			/* attempt to allocated irq_descs */
@@ -202,7 +222,7 @@ struct irq_domain *irq_domain_add_simple(struct device_node *of_node,
 				pr_info("Cannot allocate irq_descs @ IRQ%d, assuming pre-allocated\n",
 					first_irq);
 		}
-		irq_domain_associate_many(domain, first_irq, 0, size);
+		irq_domain_associate_many(domain, first_irq, 0/*hwirq_base*/, size);
 	}
 
 	return domain;
@@ -283,6 +303,7 @@ EXPORT_SYMBOL_GPL(irq_find_matching_fwnode);
 
 /**
  * irq_set_default_host() - Set a "default" irq domain
+ * 						  - 设置一个默认的irq domain
  * @domain: default domain pointer
  *
  * For convenience, it's possible to set a "default" domain that will be used
@@ -337,9 +358,12 @@ void irq_domain_disassociate(struct irq_domain *domain, unsigned int irq)
 int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 			 irq_hw_number_t hwirq)
 {
+	//irq_data 在 irq_desc 结构体中, 通过 virq 获取 irq_desc, 
+	//进而获取到ira_data 指针
 	struct irq_data *irq_data = irq_get_irq_data(virq);
 	int ret;
 
+	//WARN(condition, format...) 满足condition时,输出打印信息
 	if (WARN(hwirq >= domain->hwirq_max,
 		 "error: hwirq 0x%x is too large for %s\n", (int)hwirq, domain->name))
 		return -EINVAL;
@@ -389,6 +413,10 @@ int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 }
 EXPORT_SYMBOL_GPL(irq_domain_associate);
 
+/* 
+ * irq_domain 关联 
+ * irq 和 hwirq 在该函数中建立联系
+ */
 void irq_domain_associate_many(struct irq_domain *domain, unsigned int irq_base,
 			       irq_hw_number_t hwirq_base, int count)
 {
@@ -998,8 +1026,10 @@ static int irq_domain_alloc_irq_data(struct irq_domain *domain,
 
 /**
  * irq_domain_get_irq_data - Get irq_data associated with @virq and @domain
+ * 						   - 获取virq和domain相关的irq_data
  * @domain:	domain to match
  * @virq:	IRQ number to get irq_data
+ * 			获取irq_data的中断号
  */
 struct irq_data *irq_domain_get_irq_data(struct irq_domain *domain,
 					 unsigned int virq)
@@ -1324,6 +1354,7 @@ void irq_domain_deactivate_irq(struct irq_data *irq_data)
 	}
 }
 
+/* irq_domain是否存在层级关系 */
 static void irq_domain_check_hierarchy(struct irq_domain *domain)
 {
 	/* Hierarchy irq_domains must implement callback alloc() */

@@ -1,4 +1,5 @@
 irq_domain interrupt number mapping library
+irq_domain 中断映射库
 
 The current design of the Linux kernel uses a single large number
 space where each separate IRQ source is assigned a different number.

@@ -1,5 +1,6 @@
 /*
  * Local APIC related interfaces to support IOAPIC, MSI, HT_IRQ etc.
+ * 本地APIC相关接口，用于支持IOAPIC,MSI,HT_IRQ等
  *
  * Copyright (C) 1997, 1998, 1999, 2000, 2009 Ingo Molnar, Hajnalka Szabo
  *	Moved from arch/x86/kernel/apic/io_apic.c.
@@ -21,8 +22,10 @@
 #include <asm/desc.h>
 #include <asm/irq_remapping.h>
 
+/* apic中断芯片数据 */
 struct apic_chip_data {
 	struct irq_cfg		cfg;
+	//TODO:这个地方的domain是做什么用的?
 	cpumask_var_t		domain;
 	cpumask_var_t		old_domain;
 	u8			move_in_progress : 1;
@@ -104,6 +107,7 @@ static void free_apic_chip_data(unsigned int virq, struct apic_chip_data *data)
 	}
 }
 
+/* 分配中断向量 */
 static int __assign_irq_vector(int irq, struct apic_chip_data *d,
 			       const struct cpumask *mask)
 {
@@ -125,14 +129,19 @@ static int __assign_irq_vector(int irq, struct apic_chip_data *d,
 	/*
 	 * If there is still a move in progress or the previous move has not
 	 * been cleaned up completely, tell the caller to come back later.
+	 *
+	 * 如果当前有一个迁移正在进行中或者之前的迁移没有完全结束,通知调用者过会
+	 * 再执行.
 	 */
 	if (d->move_in_progress ||
 	    cpumask_intersects(d->old_domain, cpu_online_mask))
 		return -EBUSY;
 
 	/* Only try and allocate irqs on cpus that are present */
+	/* 只在当前存在的cpu上申请中断 */
 	cpumask_clear(d->old_domain);
 	cpumask_clear(searched_cpumask);
+	//存在于掩码中且在线上的第一个cpu
 	cpu = cpumask_first_and(mask, cpu_online_mask);
 	while (cpu < nr_cpu_ids) {
 		int new_cpu, offset;
@@ -157,8 +166,12 @@ static int __assign_irq_vector(int irq, struct apic_chip_data *d,
 			/*
 			 * Mark the cpus which are not longer in the mask for
 			 * cleanup.
+			 *
+			 * old_domain 中存放的是 vector_cpumask 中为 0, 但是 d->domain 
+			 * 中不为 0 的掩码.
 			 */
 			cpumask_andnot(d->old_domain, d->domain, vector_cpumask);
+			//分配一个中断向量
 			vector = d->cfg.vector;
 			goto update;
 		}
@@ -166,6 +179,7 @@ static int __assign_irq_vector(int irq, struct apic_chip_data *d,
 		vector = current_vector;
 		offset = current_offset;
 next:
+		/* 寻找可用的vector */
 		vector += 16;
 		if (vector >= first_system_vector) {
 			offset = (offset + 1) % 16;
@@ -176,6 +190,9 @@ next:
 		if (unlikely(current_vector == vector))
 			goto next_cpu;
 
+		/* 
+		 * 此处的used_vectors应该是除了通用外部中断之外其他功能用到的中断向量 
+		 */
 		if (test_bit(vector, used_vectors))
 			goto next;
 
@@ -212,6 +229,8 @@ update:
 	/*
 	 * Exclude offline cpus from the cleanup mask and set the
 	 * move_in_progress flag when the result is not empty.
+	 * 从清理掩码中去掉掉线的cpu,当结果不为空时设置 move_in_progress i
+	 * 标识位.
 	 */
 	cpumask_and(d->old_domain, d->old_domain, cpu_online_mask);
 	d->move_in_progress = !cpumask_empty(d->old_domain);
@@ -223,12 +242,15 @@ success:
 	 * Cache destination APIC IDs into cfg->dest_apicid. This cannot fail
 	 * as we already established, that mask & d->domain & cpu_online_mask
 	 * is not empty.
+	 * 缓存目的APIC IDs到cfg->dest_apicid中.该操作不可能失败因为我们已经
+	 * 建立了.
 	 */
 	BUG_ON(apic->cpu_mask_to_apicid_and(mask, d->domain,
 					    &d->cfg.dest_apicid));
 	return 0;
 }
 
+/* apic_set_affinity() 中会调用到该函数,其中mask就是对应响应该中断的cpu mask */
 static int assign_irq_vector(int irq, struct apic_chip_data *data,
 			     const struct cpumask *mask)
 {
@@ -241,10 +263,12 @@ static int assign_irq_vector(int irq, struct apic_chip_data *data,
 	return err;
 }
 
-static int assign_irq_vector_policy(int irq, int node,
+/* 通过不同的方式申请中断向量 */
+定static int assign_irq_vector_policy(int irq, int node,
 				    struct apic_chip_data *data,
 				    struct irq_alloc_info *info)
 {
+	/* 申请mask掩码指定cpu的中断 */
 	if (info && info->mask)
 		return assign_irq_vector(irq, data, info->mask);
 	if (node != NUMA_NO_NODE &&
@@ -419,9 +443,9 @@ static void init_legacy_irqs(void)
 		data = legacy_irq_data[i] = alloc_apic_chip_data(node);
 		BUG_ON(!data);
 
-		data->cfg.vector = ISA_IRQ_VECTOR(i);
-		cpumask_setall(data->domain);
-		irq_set_chip_data(i, data);
+		data->cfg.vector = ISA_IRQ_VECTOR(i);	//设置中断向量
+		cpumask_setall(data->domain);			//设置cpu掩码
+		irq_set_chip_data(i, data);				//下发芯片
 	}
 }
 #else
@@ -518,6 +542,7 @@ void apic_ack_edge(struct irq_data *data)
 	ack_APIC_irq();
 }
 
+//local apic设置中断亲和性
 static int apic_set_affinity(struct irq_data *irq_data,
 			     const struct cpumask *dest, bool force)
 {
@@ -530,14 +555,18 @@ static int apic_set_affinity(struct irq_data *irq_data,
 	if (!cpumask_intersects(dest, cpu_online_mask))
 		return -EINVAL;
 
+	//分配中断向量
 	err = assign_irq_vector(irq, data, dest);
 	return err ? err : IRQ_SET_MASK_OK;
 }
 
+void ____push_stack() {}
+
+/* irq_chip local apic 中断控制器 */
 static struct irq_chip lapic_controller = {
-	.irq_ack		= apic_ack_edge,
-	.irq_set_affinity	= apic_set_affinity,
-	.irq_retrigger		= apic_retrigger_irq,
+	.irq_ack		= apic_ack_edge,				//开始一轮新的中断
+	.irq_set_affinity	= apic_set_affinity,		//smp下设置中断亲和性
+	.irq_retrigger		= apic_retrigger_irq,		//中断重新发送
 };
 
 #ifdef CONFIG_SMP
@@ -546,6 +575,7 @@ static void __send_cleanup_vector(struct apic_chip_data *data)
 	raw_spin_lock(&vector_lock);
 	cpumask_and(data->old_domain, data->old_domain, cpu_online_mask);
 	data->move_in_progress = 0;
+	/* 如果不为空,发送中断迁移中断向量清理 */
 	if (!cpumask_empty(data->old_domain))
 		apic->send_IPI_mask(data->old_domain, IRQ_MOVE_CLEANUP_VECTOR);
 	raw_spin_unlock(&vector_lock);
@@ -581,6 +611,7 @@ asmlinkage __visible void smp_irq_move_cleanup_interrupt(void)
 			continue;
 
 		if (!raw_spin_trylock(&desc->lock)) {
+			//释放一下vector_lock,然后重新尝试,防止长时间占用该锁
 			raw_spin_unlock(&vector_lock);
 			cpu_relax();
 			raw_spin_lock(&vector_lock);
@@ -594,6 +625,9 @@ asmlinkage __visible void smp_irq_move_cleanup_interrupt(void)
 		/*
 		 * Nothing to cleanup if irq migration is in progress
 		 * or this cpu is not set in the cleanup mask.
+		 *
+		 * 如果irq 迁移正在处理过程中或者该CPU不在清理掩码内,
+		 * 不做任何动作.
 		 */
 		if (data->move_in_progress ||
 		    !cpumask_test_cpu(me, data->old_domain))
@@ -601,8 +635,11 @@ asmlinkage __visible void smp_irq_move_cleanup_interrupt(void)
 
 		/*
 		 * We have two cases to handle here:
+		 * 此处我们需要处理两种情况:
 		 * 1) vector is unchanged but the target mask got reduced
+		 *    中断向量没变但是牧鞭掩码减少了
 		 * 2) vector and the target mask has changed
+		 *	  中断向量和目标掩码都改变了
 		 *
 		 * #1 is obvious, but in #2 we have two vectors with the same
 		 * irq descriptor: the old and the new vector. So we need to
@@ -622,11 +659,16 @@ asmlinkage __visible void smp_irq_move_cleanup_interrupt(void)
 		 * the best time to clean it up. Lets clean it up in the
 		 * next attempt by sending another IRQ_MOVE_CLEANUP_VECTOR
 		 * to myself.
+		 * 检查我们需要清理的中断向量是否在cpu中断请求寄存器中重新注册,
+		 * 如果已经重新注册,当前不适合清空.我们可以通过发送一个 
+		 * IRQ_MOVE_CLEANUP_VECTOR ,下次尝试清空该中断向量.
 		 */
 		if (irr  & (1 << (vector % 32))) {
+			//IPI(Inter Processor Interrupt) 处理器间中断
 			apic->send_IPI_self(IRQ_MOVE_CLEANUP_VECTOR);
 			goto unlock;
 		}
+
 		__this_cpu_write(vector_irq[vector], VECTOR_UNUSED);
 		cpumask_clear_cpu(me, data->old_domain);
 unlock:
@@ -644,11 +686,11 @@ static void __irq_complete_move(struct irq_cfg *cfg, unsigned vector)
 	struct apic_chip_data *data;
 
 	data = container_of(cfg, struct apic_chip_data, cfg);
-	if (likely(!data->move_in_progress))
+	if (likely(!data->move_in_progress))		//TODO: move_in_progress ??
 		return;
 
 	me = smp_processor_id();
-	if (vector == data->cfg.vector && cpumask_test_cpu(me, data->domain))
+	if (vector == data->cfg.vector && cpumask_test_cpu(me, data->domain))	//TODO: domain ??
 		__send_cleanup_vector(data);
 }
 
@@ -659,6 +701,8 @@ void irq_complete_move(struct irq_cfg *cfg)
 
 /*
  * Called from fixup_irqs() with @desc->lock held and interrupts disabled.
+ * 被fixup_irqs()调用，调用该函数时 @desc->lock 获取且中断被禁止。
+ * 强制完成中断迁移。
  */
 void irq_force_complete_move(struct irq_desc *desc)
 {
@@ -672,10 +716,13 @@ void irq_force_complete_move(struct irq_desc *desc)
 	 * irqdomain they belong to. For example if an IRQ is provided by
 	 * an irq_chip as part of a GPIO driver, the chip data for that
 	 * descriptor is specific to the irq_chip in question.
+	 * 所有的描述符都会执行该函数，而不管他们属于哪个irqdomain。
 	 *
 	 * Check first that the chip_data is what we expect
 	 * (apic_chip_data) before touching it any further.
+	 * 操作之前检查这些desc是否是我们想要的。
 	 */
+	/* irq_desc{}-->irq-->irq_desc{}-->irq_data->parent_data */
 	irqdata = irq_domain_get_irq_data(x86_vector_domain,
 					  irq_desc_get_irq(desc));
 	if (!irqdata)
@@ -716,9 +763,12 @@ void irq_force_complete_move(struct irq_desc *desc)
 	 * 1) The interrupt is in move_in_progress state. That means that we
 	 *    have not seen an interrupt since the io_apic was reprogrammed to
 	 *    the new vector.
+	 *    中断处于 move_in_progress 状态，表示当前我们看不到这个中断，因为
+	 *    该中断被重新编程到新的中断向量中。
 	 *
 	 * 2) The interrupt has fired on the new vector, but the cleanup IPIs
 	 *    have not been processed yet.
+	 *    中断在新的中断向量中触发，但是还没清理IPIs
 	 */
 	if (data->move_in_progress) {
 		/*
@@ -954,6 +1004,7 @@ static __init int setup_show_lapic(char *arg)
 }
 __setup("show_lapic=", setup_show_lapic);
 
+//中断控制输出
 static int __init print_ICs(void)
 {
 	if (apic_verbosity == APIC_QUIET)

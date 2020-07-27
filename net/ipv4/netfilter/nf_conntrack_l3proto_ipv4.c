@@ -92,6 +92,7 @@ static int ipv4_get_l4proto(const struct sk_buff *skb, unsigned int nhoff,
 	return NF_ACCEPT;
 }
 
+//此处的helper从之前的
 static unsigned int ipv4_helper(void *priv,
 				struct sk_buff *skb,
 				const struct nf_hook_state *state)
