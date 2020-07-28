@@ -1135,12 +1135,11 @@ void irq_domain_reset_irq_data(struct irq_data *irq_data)
 
 /**
  * irq_domain_free_irqs_common - Clear irq_data and free the parent
- *
- * TODO: 2020.07.28 begin from here...
- *
  * @domain:	Interrupt domain to match
  * @virq:	IRQ number to start with
  * @nr_irqs:	The number of irqs to free
+ *
+ * 释放domain内对应的[virq, virq+nr_irqs]对应的irq_data, 同时释放 parent 对应的
  */
 void irq_domain_free_irqs_common(struct irq_domain *domain, unsigned int virq,
 				 unsigned int nr_irqs)
@@ -1191,6 +1190,7 @@ static void irq_domain_free_irqs_recursive(struct irq_domain *domain,
 	}
 }
 
+/* 递归申请中断 */
 static int irq_domain_alloc_irqs_recursive(struct irq_domain *domain,
 					   unsigned int irq_base,
 					   unsigned int nr_irqs, void *arg)
@@ -1231,6 +1231,10 @@ static int irq_domain_alloc_irqs_recursive(struct irq_domain *domain,
  * irq_domain_activate_irq(), is to program hardwares with preallocated
  * resources. In this way, it's easier to rollback when failing to
  * allocate resources.
+ * 
+ * 整个设置IRQ的动作分两部分进行：首先，通过 __irq_domain_alloc_irqs()
+ * 申请中断描述符和必要的硬件资源；然后通过 irq_domain_activate_irq()
+ * 使能之前申请的硬件资源。
  */
 int __irq_domain_alloc_irqs(struct irq_domain *domain, int irq_base,
 			    unsigned int nr_irqs, int node, void *arg,
@@ -1357,12 +1361,15 @@ void irq_domain_free_irqs_parent(struct irq_domain *domain,
  *
  * This is the second step to call domain_ops->activate to program interrupt
  * controllers, so the interrupt could actually get delivered.
+ *
+ * 此处是第二步，用于使能中断控制器，所以中断可以真正的往上递交。
  */
 void irq_domain_activate_irq(struct irq_data *irq_data)
 {
 	if (irq_data && irq_data->domain) {
 		struct irq_domain *domain = irq_data->domain;
 
+		//从上往下使能，先使能parent，再使能child
 		if (irq_data->parent_data)
 			irq_domain_activate_irq(irq_data->parent_data);
 		if (domain->ops->activate)
@@ -1383,6 +1390,7 @@ void irq_domain_deactivate_irq(struct irq_data *irq_data)
 	if (irq_data && irq_data->domain) {
 		struct irq_domain *domain = irq_data->domain;
 
+		//去使能和使能顺序相反
 		if (domain->ops->deactivate)
 			domain->ops->deactivate(domain, irq_data);
 		if (irq_data->parent_data)
@@ -1390,7 +1398,6 @@ void irq_domain_deactivate_irq(struct irq_data *irq_data)
 	}
 }
 
-/* irq_domain是否存在层级关系 */
 static void irq_domain_check_hierarchy(struct irq_domain *domain)
 {
 	/* Hierarchy irq_domains must implement callback alloc() */
