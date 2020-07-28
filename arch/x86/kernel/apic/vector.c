@@ -264,7 +264,7 @@ static int assign_irq_vector(int irq, struct apic_chip_data *data,
 }
 
 /* 通过不同的方式申请中断向量 */
-定static int assign_irq_vector_policy(int irq, int node,
+static int assign_irq_vector_policy(int irq, int node,
 				    struct apic_chip_data *data,
 				    struct irq_alloc_info *info)
 {
@@ -559,8 +559,6 @@ static int apic_set_affinity(struct irq_data *irq_data,
 	err = assign_irq_vector(irq, data, dest);
 	return err ? err : IRQ_SET_MASK_OK;
 }
-
-void ____push_stack() {}
 
 /* irq_chip local apic 中断控制器 */
 static struct irq_chip lapic_controller = {
