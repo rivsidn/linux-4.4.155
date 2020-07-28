@@ -37,6 +37,7 @@ struct irqaction chained_action = {
 
 /**
  *	irq_set_chip - set the irq chip for an irq
+ *				   为中断设置irq chip
  *	@irq:	irq number
  *	@chip:	pointer to irq chip description structure
  */

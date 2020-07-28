@@ -49,8 +49,11 @@ struct irq_data;
  * struct irq_fwspec - generic IRQ specifier structure
  *
  * @fwnode:		Pointer to a firmware-specific descriptor
+ * 				固件特定的描述符指针
  * @param_count:	Number of device-specific parameters
+ * 					设备特定参数个数
  * @param:		Device-specific parameters
+ * 				设备特定参数
  *
  * This structure, directly modeled after of_phandle_args, is used to
  * pass a device-specific description of an interrupt.
@@ -84,6 +87,7 @@ enum irq_domain_bus_token {
  * @unmap: Dispose of such a mapping
  * @xlate: Given a device tree node and interrupt specifier, decode
  *         the hardware irq number and linux irq type value.
+ *         给定一个设备树节点和中断指示符, 解码硬件中断号和软件中断类型
  *
  * Functions below are provided by the driver and called whenever a new mapping
  * is created or an old mapping is disposed. The driver can then proceed to
@@ -101,6 +105,7 @@ struct irq_domain_ops {
 
 #ifdef	CONFIG_IRQ_DOMAIN_HIERARCHY
 	/* extended V2 interfaces to support hierarchy irq_domains */
+	/* 用于支持层级irq_domain的拓展接口 */
 	int (*alloc)(struct irq_domain *d, unsigned int virq,
 		     unsigned int nr_irqs, void *arg);
 	void (*free)(struct irq_domain *d, unsigned int virq,
@@ -157,6 +162,7 @@ struct irq_domain {
 #endif
 
 	/* reverse map data. The linear map gets appended to the irq_domain */
+	/* 反向映射数据, 线性映射在irq_domain之后 */
 	irq_hw_number_t hwirq_max;
 	unsigned int revmap_direct_max_irq;
 	unsigned int revmap_size;

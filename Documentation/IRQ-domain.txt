@@ -111,6 +111,7 @@ Linux IRQ number into the hardware.
 Most drivers cannot use this mapping.
 
 ==== Legacy ====
+==== 传统映射 ====
 irq_domain_add_simple()
 irq_domain_add_legacy()
 irq_domain_add_legacy_isa()
@@ -134,6 +135,7 @@ The legacy map should only be used if fixed IRQ mappings must be
 supported.  For example, ISA controllers would use the legacy map for
 mapping Linux IRQs 0-15 so that existing ISA drivers get the correct IRQ
 numbers.
+比如说,ISA中断控制器应该应该用传统的映射方式,这样ISA驱动能够获取到正确的IRQ号.
 
 Most users of legacy mappings should use irq_domain_add_simple() which
 will use a legacy domain only if an IRQ range is supplied by the
@@ -153,13 +155,17 @@ before any irq_find_mapping() since the latter will actually work
 for the static IRQ assignment case.
 
 ==== Hierarchy IRQ domain ====
+==== IRQ domain 层级 ====
 On some architectures, there may be multiple interrupt controllers
 involved in delivering an interrupt from the device to the target CPU.
 Let's look at a typical interrupt delivering path on x86 platforms:
+在有些架构上, 中断递交到目标CPU过程中可能存在多个中断控制器. 
+下边是x86系统上的典型的中断递交过程:
 
 Device --> IOAPIC -> Interrupt remapping Controller -> Local APIC -> CPU
 
 There are three interrupt controllers involved:
+此处涉及三个中断控制器:
 1) IOAPIC controller
 2) Interrupt remapping controller
 3) Local APIC controller
@@ -170,6 +176,11 @@ interrupt controller and those irq_domains are organized into hierarchy.
 When building irq_domain hierarchy, the irq_domain near to the device is
 child and the irq_domain near to CPU is parent. So a hierarchy structure
 as below will be built for the example above.
+为了支持这样的硬件拓扑, 使得软件架构和硬件架构相匹配, 我们为每个中断控制器
+构造一个 irq_domain结构体, 并以层级关系组织该结构体. 存在层级关系的 irq_domain
+之间, 靠近设备的irq_domain 为子级, 靠近 CPU的为父级. 所以我们为上边的示例建造了
+下边的层级关系.
+
 	CPU Vector irq_domain (root irq_domain to manage CPU vectors)
 		^
 		|
@@ -179,23 +190,33 @@ as below will be built for the example above.
 	IOAPIC irq_domain (manage IOAPIC delivery entries/pins)
 
 There are four major interfaces to use hierarchy irq_domain:
+irq_domain的层级关系有四个重要的接口:
 1) irq_domain_alloc_irqs(): allocate IRQ descriptors and interrupt
    controller related resources to deliver these interrupts.
+   申请中断描述符和用于递交该中断的相关中断控制器资源.
 2) irq_domain_free_irqs(): free IRQ descriptors and interrupt controller
    related resources associated with these interrupts.
+   释放中断描述符和与该中断相关的中断控制器资源.
 3) irq_domain_activate_irq(): activate interrupt controller hardware to
    deliver the interrupt.
+   激活中断控制器硬件用于递交中断.
 4) irq_domain_deactivate_irq(): deactivate interrupt controller hardware
    to stop delivering the interrupt.
+   停用中断控制器硬件用于停止递交中断.
 
 Following changes are needed to support hierarchy irq_domain.
+为支持irq_domain层级关系做出了下列改变
 1) a new field 'parent' is added to struct irq_domain; it's used to
    maintain irq_domain hierarchy information.
+   一个新的'parent'域添加到了irq_domain结构体中; 用于维护层级信息.
 2) a new field 'parent_data' is added to struct irq_data; it's used to
    build hierarchy irq_data to match hierarchy irq_domains. The irq_data
    is used to store irq_domain pointer and hardware irq number.
+   一个新的 'parent_data' 域被添加到irq_data结构体中; 该域用于建立irq_data的
+   层级关系, 以跟irq_domain相匹配. irq_data用于存储 irq_domain 指针和硬件中断号.
 3) new callbacks are added to struct irq_domain_ops to support hierarchy
    irq_domain operations.
+   新的回调函数被加入到 irq_domain_ops 中用于支持 irq_domain 的层级关系.
 
 With support of hierarchy irq_domain and hierarchy irq_data ready, an
 irq_domain structure is built for each interrupt controller, and an
@@ -204,14 +225,21 @@ IRQ. Now we could go one step further to support stacked(hierarchy)
 irq_chip. That is, an irq_chip is associated with each irq_data along
 the hierarchy. A child irq_chip may implement a required action by
 itself or by cooperating with its parent irq_chip.
+我们有了支持层级关系的irq_domain 和irq_data 之后, 我们为每个中断控制器建立一
+个irq_domain, 为每个中断控制器的每个中断申请一个 irq_data结构体. 当前我们可以
+更进一步去支持层级结构 irq_chip,  一个irq_chip 在层级关系中跟 irq_data联系在
+一起. 子级的 irq_chip 可以自己实现相应的功能与父级的 irq_chip 交互.
 
 With stacked irq_chip, interrupt controller driver only needs to deal
 with the hardware managed by itself and may ask for services from its
 parent irq_chip when needed. So we could achieve a much cleaner
 software architecture.
+有了支持层级关系的 irq_chip 之后, 中断控制器驱动只需要跟自己管理的硬件交互, 或者需要
+时是向父级寻求帮助, 所以我们可以实现一个相对清晰的软件架构.
 
 For an interrupt controller driver to support hierarchy irq_domain, it
 needs to:
+一个中断控制器驱动想要支持irq_domain的层级关系, 我们需要:
 1) Implement irq_domain_ops.alloc and irq_domain_ops.free
 2) Optionally implement irq_domain_ops.activate and
    irq_domain_ops.deactivate.
@@ -219,6 +247,8 @@ needs to:
    hardware.
 4) No need to implement irq_domain_ops.map and irq_domain_ops.unmap,
    they are unused with hierarchy irq_domain.
-
+   不需要实现irq_domain_ops.map和irq_domain_ops.unmap, 这部分在层级关系的
+   irq_domain中是没用的.
 Hierarchy irq_domain may also be used to support other architectures,
 such as ARM, ARM64 etc.
+irq_domain 也可以用于支持其他架构, 比如说ARM, ARM64等.

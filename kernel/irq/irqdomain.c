@@ -264,6 +264,7 @@ EXPORT_SYMBOL_GPL(irq_domain_add_legacy);
 
 /**
  * irq_find_matching_fwnode() - Locates a domain for a given fwnode
+ * 							  - 通过给定的fwnode定位一个domain
  * @fwnode: FW descriptor of the interrupt controller
  * @bus_token: domain-specific data
  */
@@ -310,6 +311,8 @@ EXPORT_SYMBOL_GPL(irq_find_matching_fwnode);
  * whenever NULL is passed to irq_create_mapping(). It makes life easier for
  * platforms that want to manipulate a few hard coded interrupt numbers that
  * aren't properly represented in the device-tree.
+ * 为了方便, 我们可以设置一个默认的 domain 用于当NULL传递给 irq_create_mapping()
+ * 时, 这部分让平台维护某些没有在设备树中的硬编码的中断更简单.
  */
 void irq_set_default_host(struct irq_domain *domain)
 {
@@ -319,6 +322,7 @@ void irq_set_default_host(struct irq_domain *domain)
 }
 EXPORT_SYMBOL_GPL(irq_set_default_host);
 
+//清楚domain中 irq 和 hwirq 的联系
 void irq_domain_disassociate(struct irq_domain *domain, unsigned int irq)
 {
 	struct irq_data *irq_data = irq_get_irq_data(irq);
@@ -355,11 +359,12 @@ void irq_domain_disassociate(struct irq_domain *domain, unsigned int irq)
 	}
 }
 
+//域中建立 irq 和 hwirq 的联系
 int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 			 irq_hw_number_t hwirq)
 {
 	//irq_data 在 irq_desc 结构体中, 通过 virq 获取 irq_desc, 
-	//进而获取到ira_data 指针
+	//进而获取到irq_data 指针
 	struct irq_data *irq_data = irq_get_irq_data(virq);
 	int ret;
 
@@ -376,12 +381,16 @@ int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 	irq_data->hwirq = hwirq;
 	irq_data->domain = domain;
 	if (domain->ops->map) {
+		//TODO: 硬件注册的回调函数
 		ret = domain->ops->map(domain, virq, hwirq);
 		if (ret != 0) {
 			/*
 			 * If map() returns -EPERM, this interrupt is protected
 			 * by the firmware or some other service and shall not
 			 * be mapped. Don't bother telling the user about it.
+			 *
+			 * 如果返回 -EPERM, 表示该中断是被固件或者其他服务保护的,
+			 * 不能够被映射, 该信息不需要通知用户.
 			 */
 			if (ret != -EPERM) {
 				pr_info("%s didn't like hwirq-0x%lx to VIRQ%i mapping (rc=%d)\n",
@@ -465,6 +474,7 @@ unsigned int irq_create_direct_mapping(struct irq_domain *domain)
 	}
 	pr_debug("create_direct obtained virq %d\n", virq);
 
+	//建立映射关系, virq == hwirq
 	if (irq_domain_associate(domain, virq, virq)) {
 		irq_free_desc(virq);
 		return 0;
@@ -476,6 +486,7 @@ EXPORT_SYMBOL_GPL(irq_create_direct_mapping);
 
 /**
  * irq_create_mapping() - Map a hardware interrupt into linux irq space
+ * 						  映射硬件中断到linux软件中断
  * @domain: domain owning this hardware interrupt or NULL for default domain
  * @hwirq: hardware irq number in that domain space
  *
@@ -517,6 +528,7 @@ unsigned int irq_create_mapping(struct irq_domain *domain,
 		return 0;
 	}
 
+	//建立 virq 和 hwirq 的联系
 	if (irq_domain_associate(domain, virq, hwirq)) {
 		irq_free_desc(virq);
 		return 0;
@@ -582,6 +594,7 @@ static int irq_domain_translate(struct irq_domain *d,
 	return 0;
 }
 
+//可见 irq_fwspec 完全是从 of_phandle_args 中cp 得到的
 static void of_phandle_args_to_fwspec(struct of_phandle_args *irq_data,
 				      struct irq_fwspec *fwspec)
 {
@@ -619,6 +632,9 @@ unsigned int irq_create_fwspec_mapping(struct irq_fwspec *fwspec)
 		/*
 		 * If we've already configured this interrupt,
 		 * don't do it again, or hell will break loose.
+		 *
+		 * 如果我们已经配置了该中断, 不要重读操作, 否则后果
+		 * 很严重.
 		 */
 		virq = irq_find_mapping(domain, hwirq);
 		if (virq)
@@ -653,6 +669,7 @@ EXPORT_SYMBOL_GPL(irq_create_of_mapping);
 
 /**
  * irq_dispose_mapping() - Unmap an interrupt
+ * 						   取消中断映射
  * @virq: linux irq number of the interrupt to unmap
  */
 void irq_dispose_mapping(unsigned int virq)
@@ -674,6 +691,7 @@ EXPORT_SYMBOL_GPL(irq_dispose_mapping);
 
 /**
  * irq_find_mapping() - Find a linux irq from an hw irq number.
+ * 						通过linux中断号寻找硬件中断号
  * @domain: domain owning this hardware interrupt
  * @hwirq: hardware irq number in that domain space
  */
@@ -688,6 +706,7 @@ unsigned int irq_find_mapping(struct irq_domain *domain,
 	if (domain == NULL)
 		return 0;
 
+	//直接映射
 	if (hwirq < domain->revmap_direct_max_irq) {
 		data = irq_domain_get_irq_data(domain, hwirq);
 		if (data && data->hwirq == hwirq)
@@ -695,9 +714,11 @@ unsigned int irq_find_mapping(struct irq_domain *domain,
 	}
 
 	/* Check if the hwirq is in the linear revmap. */
+	/* 线性映射 */
 	if (hwirq < domain->revmap_size)
 		return domain->linear_revmap[hwirq];
 
+	/* radix树映射 */
 	rcu_read_lock();
 	data = radix_tree_lookup(&domain->revmap_tree, hwirq);
 	rcu_read_unlock();
@@ -883,14 +904,17 @@ static int irq_domain_alloc_descs(int virq, unsigned int cnt,
 #ifdef	CONFIG_IRQ_DOMAIN_HIERARCHY
 /**
  * irq_domain_create_hierarchy - Add a irqdomain into the hierarchy
+ * 								 添加一个irqdomain 到层级结构中
  * @parent:	Parent irq domain to associate with the new domain
  * @flags:	Irq domain flags associated to the domain
  * @size:	Size of the domain. See below
  * @fwnode:	Optional fwnode of the interrupt controller
  * @ops:	Pointer to the interrupt domain callbacks
  * @host_data:	Controller private data pointer
+ * 				控制器私有数据指针
  *
  * If @size is 0 a tree domain is created, otherwise a linear domain.
+ * 如果@size 是 0 创建一个tree 域, 否则创建一个linear 域
  *
  * If successful the parent is associated to the new domain and the
  * domain flags are set.
@@ -917,10 +941,15 @@ struct irq_domain *irq_domain_create_hierarchy(struct irq_domain *parent,
 	return domain;
 }
 
+/* 插入中断到irq_domain, 支持层级结构 */
 static void irq_domain_insert_irq(int virq)
 {
 	struct irq_data *data;
 
+	/* 
+	 * 从下到上所有中断控制器的hwirq都对应相同的virq
+	 * TODO: data 的层级关系是什么时候建立的?
+	 */
 	for (data = irq_get_irq_data(virq); data; data = data->parent_data) {
 		struct irq_domain *domain = data->domain;
 		irq_hw_number_t hwirq = data->hwirq;
@@ -973,7 +1002,7 @@ static struct irq_data *irq_domain_insert_irq_data(struct irq_domain *domain,
 				irq_data_get_node(child));
 	if (irq_data) {
 		child->parent_data = irq_data;
-		irq_data->irq = child->irq;
+		irq_data->irq = child->irq;		//跟子级有相同的virq
 		irq_data->common = child->common;
 		irq_data->domain = domain;
 	}
@@ -1000,6 +1029,7 @@ static void irq_domain_free_irq_data(unsigned int virq, unsigned int nr_irqs)
 	}
 }
 
+/* irq_domain 申请 irq_data */
 static int irq_domain_alloc_irq_data(struct irq_domain *domain,
 				     unsigned int virq, unsigned int nr_irqs)
 {
@@ -1026,10 +1056,11 @@ static int irq_domain_alloc_irq_data(struct irq_domain *domain,
 
 /**
  * irq_domain_get_irq_data - Get irq_data associated with @virq and @domain
- * 						   - 获取virq和domain相关的irq_data
  * @domain:	domain to match
  * @virq:	IRQ number to get irq_data
- * 			获取irq_data的中断号
+ * 
+ * 一个virq对应的irq_data 可能存在多个, 从child --> parent 的virq 是相同的, 
+ * 需要通过domain 来界定.
  */
 struct irq_data *irq_domain_get_irq_data(struct irq_domain *domain,
 					 unsigned int virq)
@@ -1046,6 +1077,7 @@ struct irq_data *irq_domain_get_irq_data(struct irq_domain *domain,
 
 /**
  * irq_domain_set_hwirq_and_chip - Set hwirq and irqchip of @virq at @domain
+ * 								   为domain中的@virq设置hwirq 和irqchip
  * @domain:	Interrupt domain to match
  * @virq:	IRQ number
  * @hwirq:	The hwirq number
@@ -1070,6 +1102,7 @@ int irq_domain_set_hwirq_and_chip(struct irq_domain *domain, unsigned int virq,
 
 /**
  * irq_domain_set_info - Set the complete data for a @virq in @domain
+ * 						 为@domain 中的@virq 设置完整的信息
  * @domain:		Interrupt domain to match
  * @virq:		IRQ number
  * @hwirq:		The hardware interrupt number
@@ -1102,6 +1135,9 @@ void irq_domain_reset_irq_data(struct irq_data *irq_data)
 
 /**
  * irq_domain_free_irqs_common - Clear irq_data and free the parent
+ *
+ * TODO: 2020.07.28 begin from here...
+ *
  * @domain:	Interrupt domain to match
  * @virq:	IRQ number to start with
  * @nr_irqs:	The number of irqs to free

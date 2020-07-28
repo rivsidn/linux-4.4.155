@@ -37,13 +37,13 @@ enum irqchip_irq_state;
  *
  * Bits 0-7 are the same as the IRQF_* bits in linux/interrupt.h
  *
- * IRQ_TYPE_NONE		- default, unspecified type
- * IRQ_TYPE_EDGE_RISING		- rising edge triggered
- * IRQ_TYPE_EDGE_FALLING	- falling edge triggered
- * IRQ_TYPE_EDGE_BOTH		- rising and falling edge triggered
- * IRQ_TYPE_LEVEL_HIGH		- high level triggered
- * IRQ_TYPE_LEVEL_LOW		- low level triggered
- * IRQ_TYPE_LEVEL_MASK		- Mask to filter out the level bits
+ * IRQ_TYPE_NONE		- default, unspecified type(默认未指定类型)
+ * IRQ_TYPE_EDGE_RISING		- rising edge triggered(上升沿触发)
+ * IRQ_TYPE_EDGE_FALLING	- falling edge triggered(下降沿触发)
+ * IRQ_TYPE_EDGE_BOTH		- rising and falling edge triggered(上升或下降沿触发)
+ * IRQ_TYPE_LEVEL_HIGH		- high level triggered(高电平触发)
+ * IRQ_TYPE_LEVEL_LOW		- low level triggered(低电平触发)
+ * IRQ_TYPE_LEVEL_MASK		- Mask to filter out the level bits(电平位掩码)
  * IRQ_TYPE_SENSE_MASK		- Mask for all the above bits
  * IRQ_TYPE_DEFAULT		- For use by some PICs to ask irq_set_type
  *				  to setup the HW to a sane default (used
@@ -164,7 +164,6 @@ struct irq_common_data {
  *				中断转化域,用于硬件中断号和linux中断号映射.
  * @parent_data:	pointer to parent struct irq_data to support hierarchy
  *			irq_domain
- *					指向父节点的irq_data结构体用于支持irq_domain分级
  * @chip_data:		platform-specific per-chip private data for the chip
  *			methods, to allow shared chip implementations
  */
