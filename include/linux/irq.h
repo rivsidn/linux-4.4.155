@@ -134,7 +134,6 @@ struct irq_domain;
  * @node:		node index useful for balancing
  * @handler_data:	per-IRQ data for the irq_chip methods
  * @affinity:		IRQ affinity on SMP
- * 					SMP中的中断亲和性
  * @msi_desc:		MSI descriptor
  */
 struct irq_common_data {
@@ -315,7 +314,6 @@ static inline irq_hw_number_t irqd_to_hwirq(struct irq_data *d)
 
 /**
  * struct irq_chip - hardware interrupt chip descriptor
- * 				   - 硬件中断芯片描述符
  *
  * @name:		name for /proc/interrupts
  * @irq_startup:	start up the interrupt (defaults to ->enable if NULL)
@@ -324,7 +322,6 @@ static inline irq_hw_number_t irqd_to_hwirq(struct irq_data *d)
  * @irq_disable:	disable the interrupt
  * @irq_ack:		start of a new interrupt
  * @irq_mask:		mask an interrupt source
- * 					屏蔽中断源
  * @irq_mask_ack:	ack and mask an interrupt source
  * @irq_unmask:		unmask an interrupt source
  * @irq_eoi:		end of interrupt
@@ -770,6 +767,7 @@ struct irq_chip_regs {
  * A irq_generic_chip can have several instances of irq_chip_type when
  * it requires different functions and register offsets for different
  * flow types.
+ * 一个irq_generic_chip 可能有多个不同的irq_chip_type.
  */
 struct irq_chip_type {
 	struct irq_chip		chip;

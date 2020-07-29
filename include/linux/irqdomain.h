@@ -123,7 +123,6 @@ struct irq_domain_chip_generic;
 
 /**
  * struct irq_domain - Hardware interrupt number translation object
- * 					 - 硬件中断号转换对象
  * @link: Element in global irq_domain list.
  * @name: Name of interrupt domain
  * @ops: pointer to irq_domain methods
@@ -131,7 +130,7 @@ struct irq_domain_chip_generic;
  *             core code.
  * @flags: host per irq_domain flags
  *
- * Optional elements(可选元素)
+ * Optional elements
  * @of_node: Pointer to device tree nodes associated with the irq_domain. Used
  *           when decoding device tree interrupt specifiers.
  * @gc: Pointer to a list of generic chips. There is a helper function for
