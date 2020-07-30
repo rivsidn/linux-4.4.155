@@ -20,6 +20,8 @@
 
 /*
  * lockdep: we want to handle all irq_desc locks as a single lock-class:
+ *
+ * TODO: lockdep ???
  */
 static struct lock_class_key irq_desc_lock_class;
 
@@ -38,6 +40,7 @@ static void __init init_irq_default_affinity(void)
 #ifdef CONFIG_SMP
 static int alloc_masks(struct irq_desc *desc, gfp_t gfp, int node)
 {
+	//TODO: alloc_cpumask_var() zalloc_cpumask_var_node() 什么区别？
 	if (!zalloc_cpumask_var_node(&desc->irq_common_data.affinity,
 				     gfp, node))
 		return -ENOMEM;
@@ -62,7 +65,7 @@ static void desc_smp_init(struct irq_desc *desc, int node)
 #endif
 }
 
-#else
+#else	//CONFIG_SMP
 static inline int
 alloc_masks(struct irq_desc *desc, gfp_t gfp, int node) { return 0; }
 static inline void desc_smp_init(struct irq_desc *desc, int node) { }
@@ -192,7 +195,7 @@ static void free_desc(unsigned int irq)
 	kfree(desc);
 }
 
-//申请 irq_desc 结构体
+//申请多个 irq_desc 结构体
 static int alloc_descs(unsigned int start, unsigned int cnt, int node,
 		       struct module *owner)
 {
@@ -219,6 +222,7 @@ err:
 	return -ENOMEM;
 }
 
+/* 拓展nr_irqs */
 static int irq_expand_nr_irqs(unsigned int nr)
 {
 	if (nr > IRQ_BITMAP_BITS)
