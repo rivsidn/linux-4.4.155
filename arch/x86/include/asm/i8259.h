@@ -16,7 +16,7 @@ extern unsigned int cached_irq_mask;
 #define PIC_MASTER_POLL		PIC_MASTER_ISR
 #define PIC_MASTER_OCW3		PIC_MASTER_ISR
 #define PIC_SLAVE_CMD		0xa0
-#define PIC_SLAVE_IMR		0xa1
+#define PIC_SLAVE_IMR		0xa1			//IMR: Interrupt Mask Register
 
 /* i8259A PIC related value */
 #define PIC_CASCADE_IR		2

@@ -148,6 +148,8 @@ int generic_handle_irq(unsigned int irq);
  * and handle the result interrupt number. Return -EINVAL if
  * conversion failed. Providing a NULL domain indicates that the
  * conversion has already been done.
+ * (通过IRQ domain将硬件中断号转换成逻辑中断号，并处理相应的逻辑中断。
+ * 当返回-EINVAL时表示转换失败；domain为NULL时表示已经做过转换了。)
  */
 int __handle_domain_irq(struct irq_domain *domain, unsigned int hwirq,
 			bool lookup, struct pt_regs *regs);

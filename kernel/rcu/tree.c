@@ -868,10 +868,12 @@ void rcu_user_exit(void)
 
 /**
  * rcu_irq_enter - inform RCU that current CPU is entering irq away from idle
- *
+ * 				   (通知RCU当前CPU进入到中断中不再是idle状态了)
  * Enter an interrupt handler, which might possibly result in exiting
  * idle mode, in other words, entering the mode in which read-side critical
  * sections can occur.
+ * (进入到中断处理函数中，可能会导致退出idle模式(TODO:为什么是可能？)，也就
+ * 是说进入到一个可能会触发读临近取的模式)
  *
  * Note that the Linux kernel is fully capable of entering an interrupt
  * handler that it never exits, for example when doing upcalls to
@@ -880,10 +882,15 @@ void rcu_user_exit(void)
  * does anything else that results in unbalanced calls to the irq_enter()
  * and irq_exit() functions), RCU will give you what you deserve, good
  * and hard.  But very infrequently and irreproducibly.
+ * (Linux内核有能力进入到一个不会返回的中断处理函数中，比如说在中断处理函数中
+ * 做到用户态的上行调用(TODO: 上行调用是个啥？)；但如果你真的这么做了，RCU可能
+ * 会严重错误。)
  *
  * Use things like work queues to work around this limitation.
+ * (通过工作队列来绕开该限制)
  *
  * You have been warned.
+ * (出了问题别说没告诉你。)
  */
 void rcu_irq_enter(void)
 {

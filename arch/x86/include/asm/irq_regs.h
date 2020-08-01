@@ -18,6 +18,8 @@ static inline struct pt_regs *get_irq_regs(void)
 	return this_cpu_read(irq_regs);
 }
 
+//将new_regs 设置给per_cpu变量irq_regs，这样在之后的中断处理函数中，
+//就可以通过访问irq_regs，获取到当前的数值。
 static inline struct pt_regs *set_irq_regs(struct pt_regs *new_regs)
 {
 	struct pt_regs *old_regs;

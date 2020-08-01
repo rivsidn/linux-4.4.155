@@ -520,6 +520,7 @@ do {									\
 /*
  * Operations with implied preemption/interrupt protection.  These
  * operations can be used without worrying about preemption or interrupt.
+ * (该类变量使用的时候不需要担心抢占和中断)
  */
 #define this_cpu_read(pcp)		__pcpu_size_call_return(this_cpu_read_, pcp)
 #define this_cpu_write(pcp, val)	__pcpu_size_call(this_cpu_write_, pcp, val)

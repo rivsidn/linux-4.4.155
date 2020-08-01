@@ -2345,6 +2345,9 @@ unsigned int arch_dynirq_lower_bound(unsigned int from)
 	/*
 	 * dmar_alloc_hwirq() may be called before setup_IO_APIC(), so use
 	 * gsi_top if ioapic_dynirq_base hasn't been initialized yet.
+	 *
+	 * dmar_alloc_hwirq() 可能在 setup_IO_APIC() 之前，所以如果IOAPIC
+	 * 没初始化此处用 gsi_top。
 	 */
 	return ioapic_initialized ? ioapic_dynirq_base : gsi_top;
 }

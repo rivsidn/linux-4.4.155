@@ -295,6 +295,7 @@ static void unmask_8259A(void)
 	raw_spin_unlock_irqrestore(&i8259A_lock, flags);
 }
 
+//TODO : 何时调用的该函数；操作系统运行之前，硬件处于什么状态
 static int probe_8259A(void)
 {
 	unsigned long flags;
@@ -306,6 +307,11 @@ static int probe_8259A(void)
 	 * back the value we just wrote. If we don't
 	 * have a PIC, we will read 0xff as opposed to the
 	 * value we wrote.
+	 *
+	 * 检查PIC芯片是否存在。
+	 * 屏蔽8259A 主芯片中断屏蔽寄存器中除了 cascade 外
+	 * 所有位，然后读出我们刚写入的值。如果此时没有PIC 控
+	 * 制器我们将读出0xff 而不是我们刚写入的内容。
 	 */
 	raw_spin_lock_irqsave(&i8259A_lock, flags);
 

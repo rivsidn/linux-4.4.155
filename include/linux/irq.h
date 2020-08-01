@@ -68,7 +68,7 @@ enum irqchip_irq_state;
  * IRQ_NO_BALANCING		- Interrupt cannot be balanced (affinity set)
  * IRQ_MOVE_PCNTXT		- Interrupt can be migrated from process context
  * IRQ_NESTED_THREAD		- Interrupt nests into another thread
- * IRQ_PER_CPU_DEVID		- Dev_id is a per-cpu variable
+ * IRQ_PER_CPU_DEVID		- Dev_id is a per-cpu variable(设备id为per-cpu变量)
  * IRQ_IS_POLLED		- Always polled by another interrupt. Exclude
  *				  it from the spurious interrupt detection
  *				  mechanism and from core side polling.

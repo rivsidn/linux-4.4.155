@@ -36,6 +36,8 @@ void (*x86_platform_ipi_callback)(void) = NULL;
 /*
  * 'what should we do if we get a hw irq event on an illegal vector'.
  * each architecture has to answer this themselves.
+ * '如果我们在非法的中断向量上获取到了一个硬件中断该怎么处理？'
+ * 不同的架构必须要自己处理这类事件。
  */
 void ack_bad_irq(unsigned int irq)
 {
@@ -49,7 +51,12 @@ void ack_bad_irq(unsigned int irq)
 	 * holds up an irq slot - in excessive cases (when multiple
 	 * unexpected vectors occur) that might lock up the APIC
 	 * completely.
+	 * (当前，异常的中断向量只可能在SMP和APIC下发生。我们必须要针对
+	 * 该类中断做回复，因为每个本地APIC只有N个槽位，一个‘挂起，未回应’
+	 * 的中断可能会导致该槽位阻塞，当发生过多异常向量的情况我们可能
+	 * 需要将APIC彻底锁死)
 	 * But only ack when the APIC is enabled -AK
+	 * (当时只需要回应使能的APIC)
 	 */
 	ack_APIC_irq();
 }

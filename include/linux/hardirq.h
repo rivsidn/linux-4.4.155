@@ -31,6 +31,8 @@ extern void rcu_nmi_exit(void);
  * because NMI handlers may not preempt and the ops are
  * always balanced, so the interrupted value of ->hardirq_context
  * will always be restored.
+ *
+ * TODO: 理解上边的话
  */
 #define __irq_enter()					\
 	do {						\

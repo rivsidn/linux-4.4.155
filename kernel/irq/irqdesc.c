@@ -251,6 +251,7 @@ int __init early_irq_init(void)
 	if (initcnt > nr_irqs)
 		nr_irqs = initcnt;
 
+	//legacy_pic 存在时， initcnt 为 16
 	for (i = 0; i < initcnt; i++) {
 		desc = alloc_desc(i, node, NULL);
 		set_bit(i, allocated_irqs);
@@ -288,6 +289,8 @@ int __init early_irq_init(void)
 		lockdep_set_class(&desc[i].lock, &irq_desc_lock_class);
 		desc_set_defaults(i, &desc[i], node, NULL);
 	}
+
+	//执行特定arch的中断初始化
 	return arch_early_irq_init();
 }
 
@@ -320,6 +323,7 @@ static inline int alloc_descs(unsigned int start, unsigned int cnt, int node,
 	return start;
 }
 
+//不支持拓展nr_irq
 static int irq_expand_nr_irqs(unsigned int nr)
 {
 	return -ENOMEM;
@@ -343,6 +347,7 @@ void irq_init_desc(unsigned int irq)
 
 /**
  * generic_handle_irq - Invoke the handler for a particular irq
+ * 						(调用特定中断的中断响应函数，与中断处理函数区分)
  * @irq:	The irq number to handle
  *
  */
@@ -366,10 +371,12 @@ EXPORT_SYMBOL_GPL(generic_handle_irq);
  * @regs:	Register file coming from the low-level handling code
  *
  * Returns:	0 on success, or -EINVAL if conversion has failed
+ * (成功返回0，失败返回 -EINVAL)
  */
 int __handle_domain_irq(struct irq_domain *domain, unsigned int hwirq,
 			bool lookup, struct pt_regs *regs)
 {
+	//将regs 设置到irq_regs 变量中，并返回old_regs
 	struct pt_regs *old_regs = set_irq_regs(regs);
 	unsigned int irq = hwirq;
 	int ret = 0;
@@ -384,6 +391,7 @@ int __handle_domain_irq(struct irq_domain *domain, unsigned int hwirq,
 	/*
 	 * Some hardware gives randomly wrong interrupts.  Rather
 	 * than crashing, do something sensible.
+	 * (不要崩溃，做些理智的事情)
 	 */
 	if (unlikely(!irq || irq >= nr_irqs)) {
 		ack_bad_irq(irq);
@@ -393,12 +401,13 @@ int __handle_domain_irq(struct irq_domain *domain, unsigned int hwirq,
 	}
 
 	irq_exit();
-	set_irq_regs(old_regs);
+	set_irq_regs(old_regs);		//回复irq_regs
 	return ret;
 }
 #endif
 
 /* Dynamic interrupt handling */
+/* 动态中断处理 */
 
 /**
  * irq_free_descs - free irq descriptors
@@ -423,7 +432,6 @@ EXPORT_SYMBOL_GPL(irq_free_descs);
 
 /**
  * irq_alloc_descs - allocate and initialize a range of irq descriptors
- * 					 申请并初始化一些irq描述符
  * @irq:	Allocate for specific irq number if irq >= 0
  * @from:	Start the search from this irq number
  * @cnt:	Number of consecutive irqs to allocate.
@@ -431,6 +439,7 @@ EXPORT_SYMBOL_GPL(irq_free_descs);
  * @owner:	Owning module (can be NULL)
  *
  * Returns the first irq number or error code
+ * (返回第一个中断号或者错误码)
  */
 int __ref
 __irq_alloc_descs(int irq, unsigned int from, unsigned int cnt, int node,
@@ -450,10 +459,6 @@ __irq_alloc_descs(int irq, unsigned int from, unsigned int cnt, int node,
 		 * For interrupts which are freely allocated the
 		 * architecture can force a lower bound to the @from
 		 * argument. x86 uses this to exclude the GSI space.
-		 *
-		 * TODO:???
-		 * GSI: Global System Interrupt
-		 * 		全局系统中断
 		 */
 		from = arch_dynirq_lower_bound(from);
 	}
@@ -485,6 +490,7 @@ EXPORT_SYMBOL_GPL(__irq_alloc_descs);
 #ifdef CONFIG_GENERIC_IRQ_LEGACY_ALLOC_HWIRQ
 /**
  * irq_alloc_hwirqs - Allocate an irq descriptor and initialize the hardware
+ * 					  申请一个中断描述符并初始化硬件
  * @cnt:	number of interrupts to allocate
  * @node:	node on which to allocate
  *
@@ -575,6 +581,7 @@ void __irq_put_desc_unlock(struct irq_desc *desc, unsigned long flags, bool bus)
 		chip_bus_sync_unlock(desc);
 }
 
+//TODO: 干啥的？
 int irq_set_percpu_devid(unsigned int irq)
 {
 	struct irq_desc *desc = irq_to_desc(irq);
@@ -601,12 +608,14 @@ void kstat_incr_irq_this_cpu(unsigned int irq)
 
 /**
  * kstat_irqs_cpu - Get the statistics for an interrupt on a cpu
+ * 					(获取CPU上的中断统计)
  * @irq:	The interrupt number
  * @cpu:	The cpu number
  *
  * Returns the sum of interrupt counts on @cpu since boot for
  * @irq. The caller must ensure that the interrupt is not removed
  * concurrently.
+ * (返回中断总数，调用者必须确认中断没有被同步的移除)
  */
 unsigned int kstat_irqs_cpu(unsigned int irq, int cpu)
 {

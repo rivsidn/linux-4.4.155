@@ -321,6 +321,7 @@ asmlinkage __visible void do_softirq(void)
 
 /*
  * Enter an interrupt context.
+ * 进入中断上下文
  */
 void irq_enter(void)
 {
@@ -329,6 +330,7 @@ void irq_enter(void)
 		/*
 		 * Prevent raise_softirq from needlessly waking up ksoftirqd
 		 * here, as softirq will be serviced on return from interrupt.
+		 * (也就是说，此时还是可以产生软中断的～！)
 		 */
 		local_bh_disable();
 		tick_irq_enter();
@@ -376,6 +378,7 @@ static inline void tick_irq_exit(void)
 
 /*
  * Exit an interrupt context. Process softirqs if needed and possible:
+ * 退出中断上下文，有需要时处理软中断。
  */
 void irq_exit(void)
 {

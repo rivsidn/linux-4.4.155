@@ -4,6 +4,7 @@
 /*
  * include/linux/preempt.h - macros for accessing and manipulating
  * preempt_count (used for kernel preemption, interrupt count, etc.)
+ * (用于访问和操作抢占计数的宏，用于内核抢占，中断次数等。)
  */
 
 #include <linux/linkage.h>
@@ -12,6 +13,7 @@
 /*
  * We put the hardirq and softirq counter into the preemption
  * counter. The bitmask has the following meaning:
+ * (将hardirq和softirq 计数放到抢占计数中，掩码意义如下所示：)
  *
  * - bits 0-7 are the preemption count (max preemption depth: 256)
  * - bits 8-15 are the softirq count (max # of softirqs: 256)

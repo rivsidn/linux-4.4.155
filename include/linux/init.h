@@ -79,6 +79,8 @@
  * correct, so optimally document why the __ref is needed and why it's OK).
  *
  * The markers follow same syntax rules as __init / __initdata.
+ * (当代码中引用__init标识的变量时，可能会报warnning，该关键字会抑制此类报错)
+ * (参考资料：https://stackoverflow.com/questions/16229797/what-does-init-refok-keyword-means-in-linux-kernel-code)
  */
 #define __ref            __section(.ref.text) noinline
 #define __refdata        __section(.ref.data)

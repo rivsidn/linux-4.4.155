@@ -425,11 +425,15 @@ int __init arch_probe_nr_irqs(void)
 	/*
 	 * We don't know if PIC is present at this point so we need to do
 	 * probe() to get the right number of legacy IRQs.
+	 * 不清楚当前PIC 是否存在所以需要通过probe()获取正确的传统中断个
+	 * 数。
 	 */
 	return legacy_pic->probe();
 }
 
 #ifdef	CONFIG_X86_IO_APIC
+//legacy 中断初始化
+//TODO: 8259A 在有 IOAPIC 的系统中硬件是如何连接的？
 static void init_legacy_irqs(void)
 {
 	int i, node = cpu_to_node(0);
@@ -438,14 +442,19 @@ static void init_legacy_irqs(void)
 	/*
 	 * For legacy IRQ's, start with assigning irq0 to irq15 to
 	 * ISA_IRQ_VECTOR(i) for all cpu's.
+	 *
+	 * 将legacy 的irq0-irq15 分配给所有CPU 的中断向量ISA_IRQ_VECTOR(i)，
+	 * 就是实际的0x30-0x3f。
+	 *
+	 * TODO: 何时下发的硬件？
 	 */
 	for (i = 0; i < nr_legacy_irqs(); i++) {
 		data = legacy_irq_data[i] = alloc_apic_chip_data(node);
 		BUG_ON(!data);
 
-		data->cfg.vector = ISA_IRQ_VECTOR(i);	//设置中断向量
-		cpumask_setall(data->domain);			//设置cpu掩码
-		irq_set_chip_data(i, data);				//下发芯片
+		data->cfg.vector = ISA_IRQ_VECTOR(i);
+		cpumask_setall(data->domain);
+		irq_set_chip_data(i, data);
 	}
 }
 #else
@@ -456,6 +465,7 @@ int __init arch_early_irq_init(void)
 {
 	init_legacy_irqs();
 
+	//TODO:...
 	x86_vector_domain = irq_domain_add_tree(NULL, &x86_vector_domain_ops,
 						NULL);
 	BUG_ON(x86_vector_domain == NULL);
