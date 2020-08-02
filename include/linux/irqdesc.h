@@ -29,7 +29,7 @@ struct pt_regs;
  * @threads_handled:	stats field for deferred spurious detection of threaded handlers
  * @threads_handled_last: comparator field for deferred spurious detection of theraded handlers
  * @lock:		locking for SMP
- * @affinity_hint:	hint to user space for preferred irq affinity
+ * @affinity_hint:	hint to user space for preferred irq affinity(中断亲和性提示)
  * @affinity_notify:	context for notification of affinity changes
  * @pending_mask:	pending rebalanced interrupts
  * @threads_oneshot:	bitfield to handle shared oneshot threads

@@ -684,6 +684,7 @@ out_eoi:
  *	@desc:	the interrupt description structure for this irq
  *
  *	Per CPU interrupts on SMP machines without locking requirements
+ *	(SMP机器上的每CPU中断处理函数，该处不需要加锁)
  */
 void handle_percpu_irq(struct irq_desc *desc)
 {

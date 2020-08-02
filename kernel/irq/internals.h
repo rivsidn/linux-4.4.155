@@ -23,9 +23,13 @@ extern struct irqaction chained_action;
 /*
  * Bits used by threaded handlers:
  * IRQTF_RUNTHREAD - signals that the interrupt handler thread should run
+ * 					 (中断处理线程运行信号)
  * IRQTF_WARNED    - warning "IRQ_WAKE_THREAD w/o thread_fn" has been printed
+ * 					 (警告信息已经打印)
  * IRQTF_AFFINITY  - irq thread is requested to adjust affinity
+ * 					 (中断线程要求调整中断亲和性)
  * IRQTF_FORCED_THREAD  - irq action is force threaded
+ * 						  (中断动作强制线程化)
  */
 enum {
 	IRQTF_RUNTHREAD,
@@ -45,7 +49,7 @@ enum {
  * IRQS_REPLAY			- irq is replayed
  * IRQS_WAITING			- irq is waiting
  * IRQS_PENDING			- irq is pending and replayed later
- * IRQS_SUSPENDED		- irq is suspended
+ * IRQS_SUSPENDED		- irq is suspended(中断被挂起)
  */
 enum {
 	IRQS_AUTODETECT		= 0x00000001,

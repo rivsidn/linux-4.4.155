@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2006 Thomas Gleixner
  *
  * This file contains driver APIs to the irq subsystem.
+ * (该文件包含中断子系统的驱动API)
  */
 
 #define pr_fmt(fmt) "genirq: " fmt
@@ -42,6 +43,9 @@ static void __synchronize_hardirq(struct irq_desc *desc)
 		/*
 		 * Wait until we're out of the critical section.  This might
 		 * give the wrong answer due to the lack of memory barriers.
+		 * (等待直到离开临近区，该处可能会导致错误的结果因为缺少内存
+		 * 屏障)
+		 * (TODO: 内存屏障的作用？)
 		 */
 		while (irqd_irq_inprogress(&desc->irq_data))
 			cpu_relax();
@@ -57,6 +61,7 @@ static void __synchronize_hardirq(struct irq_desc *desc)
 
 /**
  *	synchronize_hardirq - wait for pending hard IRQ handlers (on other CPUs)
+ *						  (等待在其他CPU上挂起的硬件中断)
  *	@irq: interrupt number to wait for
  *
  *	This function waits for any pending hard IRQ handlers for this
@@ -105,6 +110,8 @@ void synchronize_irq(unsigned int irq)
 		 * We made sure that no hardirq handler is
 		 * running. Now verify that no threaded handlers are
 		 * active.
+		 * (在确保没有硬件中断处理函数正在运行的基础上，确保
+		 * 没有中断线程运行)
 		 */
 		wait_event(desc->wait_for_threads,
 			   !atomic_read(&desc->threads_active));
@@ -125,6 +132,7 @@ static int __irq_can_set_affinity(struct irq_desc *desc)
 
 /**
  *	irq_can_set_affinity - Check if the affinity of a given irq can be set
+ *						   (检查是否可以设置给定中断的亲和性)
  *	@irq:		Interrupt to check
  *
  */
@@ -135,6 +143,7 @@ int irq_can_set_affinity(unsigned int irq)
 
 /**
  *	irq_set_thread_affinity - Notify irq threads to adjust affinity
+ *							  (通知中断线程调整亲和性)
  *	@desc:		irq descriptor which has affitnity changed
  *
  *	We just set IRQTF_AFFINITY and delegate the affinity setting
@@ -181,6 +190,7 @@ static inline void
 irq_get_pending(struct cpumask *mask, struct irq_desc *desc) { }
 #endif
 
+//设置中断亲和性
 int irq_do_set_affinity(struct irq_data *data, const struct cpumask *mask,
 			bool force)
 {
@@ -211,9 +221,9 @@ int irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask,
 	if (!chip || !chip->irq_set_affinity)
 		return -EINVAL;
 
-	if (irq_can_move_pcntxt(data)) {
+	if (irq_can_move_pcntxt(data)) {		//可以则直接操作
 		ret = irq_do_set_affinity(data, mask, force);
-	} else {
+	} else {								//否则设置标识位，将mask暂时保存
 		irqd_set_move_pending(data);
 		irq_copy_pending(desc, mask);
 	}
@@ -293,6 +303,8 @@ out:
  *	Must be called in process context.  Notification may only be enabled
  *	after the IRQ is allocated and must be disabled before the IRQ is
  *	freed using free_irq().
+ *	(必须在进程上下文中调用。通知函数必须在中断申请之后使能，在中断释放之前
+ *	去使能。)
  */
 int
 irq_set_affinity_notifier(unsigned int irq, struct irq_affinity_notify *notify)
@@ -329,6 +341,7 @@ EXPORT_SYMBOL_GPL(irq_set_affinity_notifier);
 #ifndef CONFIG_AUTO_IRQ_AFFINITY
 /*
  * Generic version of the affinity autoselector.
+ * 通用亲和性自动选择器
  */
 static int setup_affinity(struct irq_desc *desc, struct cpumask *mask)
 {
@@ -342,6 +355,7 @@ static int setup_affinity(struct irq_desc *desc, struct cpumask *mask)
 	/*
 	 * Preserve an userspace affinity setup, but make sure that
 	 * one of the targets is online.
+	 * (保留用户态的亲和性设置，但是其中必须要有一个在线的CPU)
 	 */
 	if (irqd_has_set(&desc->irq_data, IRQD_AFFINITY_SET)) {
 		if (cpumask_intersects(desc->irq_common_data.affinity,
@@ -364,6 +378,7 @@ static int setup_affinity(struct irq_desc *desc, struct cpumask *mask)
 }
 #else
 /* Wrapper for ALPHA specific affinity selector magic */
+/* kernel/irq/Kconfig +38 中定义，该宏为Alpha 特定的中断亲和性机制 */
 static inline int setup_affinity(struct irq_desc *d, struct cpumask *mask)
 {
 	return irq_select_affinity(irq_desc_get_irq(d));
@@ -372,6 +387,7 @@ static inline int setup_affinity(struct irq_desc *d, struct cpumask *mask)
 
 /*
  * Called when affinity is set via /proc/irq
+ * (当通过 /proc/irq 设置中断亲和性时调用)
  */
 int irq_select_affinity_usr(unsigned int irq, struct cpumask *mask)
 {
@@ -395,6 +411,7 @@ setup_affinity(struct irq_desc *desc, struct cpumask *mask)
 
 /**
  *	irq_set_vcpu_affinity - Set vcpu affinity for the interrupt
+ *							(设置虚拟CPU的中断亲和性)
  *	@irq: interrupt number to set affinity
  *	@vcpu_info: vCPU specific data
  *
@@ -402,6 +419,8 @@ setup_affinity(struct irq_desc *desc, struct cpumask *mask)
  *	affinity for an irq. The vCPU specific data is passed from
  *	outside, such as KVM. One example code path is as below:
  *	KVM -> IOMMU -> irq_set_vcpu_affinity().
+ *	(该函数用于vCPU的特定数据设置vCPU的中断亲和型，vCPU的特定数据
+ *	是从外部传入的，比如KVM。)
  */
 int irq_set_vcpu_affinity(unsigned int irq, void *vcpu_info)
 {
@@ -426,6 +445,8 @@ EXPORT_SYMBOL_GPL(irq_set_vcpu_affinity);
 
 void __disable_irq(struct irq_desc *desc)
 {
+	//意思是只有第一次 desc->depth==0 时真正调用irq_disable()
+	//其他时候就只执行 desc->desc++
 	if (!desc->depth++)
 		irq_disable(desc);
 }
@@ -450,8 +471,11 @@ static int __disable_irq_nosync(unsigned int irq)
  *	nested.
  *	Unlike disable_irq(), this function does not ensure existing
  *	instances of the IRQ handler have completed before returning.
+ *	(与disable_irq()不同，该函数不确保的中断处理函数实例在函数返
+ *	回前完全结束)
  *
  *	This function may be called from IRQ context.
+ *	(该函数可能在中断上下文中调用)
  */
 void disable_irq_nosync(unsigned int irq)
 {
@@ -480,6 +504,7 @@ EXPORT_SYMBOL(disable_irq);
 
 /**
  *	disable_hardirq - disables an irq and waits for hardirq completion
+ *					  (中断去使能并等待硬件中断结束)
  *	@irq: Interrupt to disable
  *
  *	Disable the selected interrupt line.  Enables and Disables are
@@ -528,6 +553,7 @@ void __enable_irq(struct irq_desc *desc)
 
 /**
  *	enable_irq - enable handling of an irq
+ *				 (使能中断处理)
  *	@irq: Interrupt to enable
  *
  *	Undoes the effect of one call to disable_irq().  If this
@@ -570,6 +596,7 @@ static int set_irq_wake_real(unsigned int irq, unsigned int on)
 
 /**
  *	irq_set_irq_wake - control irq power management wakeup
+ *					   (控制中断电源管理唤醒)
  *	@irq:	interrupt to control
  *	@on:	enable/disable power management wakeup
  *
@@ -593,6 +620,7 @@ int irq_set_irq_wake(unsigned int irq, unsigned int on)
 	 * don't need to have the same sleep mode behaviors.
 	 */
 	if (on) {
+		//如果desc->wake_depth == 0 时才真正执行动作，否则只执行递增操作
 		if (desc->wake_depth++ == 0) {
 			ret = set_irq_wake_real(irq, on);
 			if (ret)
@@ -639,6 +667,7 @@ int can_request_irq(unsigned int irq, unsigned long irqflags)
 	return canrequest;
 }
 
+//设置中断触发类型
 int __irq_set_trigger(struct irq_desc *desc, unsigned long flags)
 {
 	struct irq_chip *chip = desc->irq_data.chip;
@@ -694,7 +723,8 @@ int __irq_set_trigger(struct irq_desc *desc, unsigned long flags)
 	return ret;
 }
 
-#ifdef CONFIG_HARDIRQS_SW_RESEND
+#ifdef CONFIG_HARDIRQS_SW_RESEND 	// kernel/irq/Kconfig +42
+//TODO: 该函数是干啥的？
 int irq_set_parent(int irq, int parent_irq)
 {
 	unsigned long flags;
@@ -723,6 +753,7 @@ static irqreturn_t irq_default_primary_handler(int irq, void *dev_id)
 /*
  * Primary handler for nested threaded interrupts. Should never be
  * called.
+ * (嵌套线程中断最初的处理函数，正常情况下不应该被调用)
  */
 static irqreturn_t irq_nested_primary_handler(int irq, void *dev_id)
 {
@@ -730,12 +761,14 @@ static irqreturn_t irq_nested_primary_handler(int irq, void *dev_id)
 	return IRQ_NONE;
 }
 
+//TODO: 这个所谓的secondary 是做什么用的？
 static irqreturn_t irq_forced_secondary_handler(int irq, void *dev_id)
 {
 	WARN(1, "Secondary action handler called for irq %d\n", irq);
 	return IRQ_NONE;
 }
 
+//中断处理线程等待中断
 static int irq_wait_for_interrupt(struct irqaction *action)
 {
 	set_current_state(TASK_INTERRUPTIBLE);
@@ -758,6 +791,8 @@ static int irq_wait_for_interrupt(struct irqaction *action)
  * Oneshot interrupts keep the irq line masked until the threaded
  * handler finished. unmask if the interrupt has not been disabled and
  * is marked MASKED.
+ * (Oneshot中断处理在线程结束前中断线都是屏蔽状态，执行结束之后需要
+ * 接触屏蔽)
  */
 static void irq_finalize_oneshot(struct irq_desc *desc,
 				 struct irqaction *action)

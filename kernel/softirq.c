@@ -348,6 +348,8 @@ static inline void invoke_softirq(void)
 		 * We can safely execute softirq on the current stack if
 		 * it is the irq stack, because it should be near empty
 		 * at this stage.
+		 * (我们能够安全的调用中断棧，因为此时它几乎是空的)
+		 * (TODO: 理解这段话)
 		 */
 		__do_softirq();
 #else
@@ -355,6 +357,8 @@ static inline void invoke_softirq(void)
 		 * Otherwise, irq_exit() is called on the task stack that can
 		 * be potentially deep already. So call softirq in its own stack
 		 * to prevent from any overrun.
+		 * (irq_exit() 在任务棧中被调用，此时可能棧可能已经很深了，所以需要
+		 * 在自己的棧上调用软中断)
 		 */
 		do_softirq_own_stack();
 #endif

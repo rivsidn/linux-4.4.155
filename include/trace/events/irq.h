@@ -48,6 +48,8 @@ SOFTIRQ_NAME_LIST
  * @action->name, and the device id, @action->dev_id. When used in
  * conjunction with the irq_handler_exit tracepoint, we can figure
  * out irq handler latencies.
+ * (当跟irq_handler_exit 跟踪点一起使用的时候我们能够统计出中断处理函数
+ * 的潜伏时间。)
  */
 TRACE_EVENT(irq_handler_entry,
 

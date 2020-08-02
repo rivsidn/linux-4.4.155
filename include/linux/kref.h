@@ -86,8 +86,11 @@ static inline int kref_sub(struct kref *kref, unsigned int count,
  *	     function, you will be publicly mocked mercilessly by the kref
  *	     maintainer, and anyone else who happens to notice it.  You have
  *	     been warned.
+ *	     (该指针不能将kfree()传入，假如调用者传入了kfree()函数，你将会受到来自
+ *	     kref的维护者公开刻薄的嘲笑。)
  *
  * Decrement the refcount, and if 0, call release().
+ * (递减引用计数，如果是0，调用 release())
  * Return 1 if the object was removed, otherwise return 0.  Beware, if this
  * function returns 0, you still can not count on the kref from remaining in
  * memory.  Only use the return value if you want to see if the kref is now

@@ -186,14 +186,12 @@ struct irq_data {
  * IRQD_SETAFFINITY_PENDING	- Affinity setting is pending
  * IRQD_NO_BALANCING		- Balancing disabled for this IRQ
  * IRQD_PER_CPU			- Interrupt is per cpu
- * 						- 中断是每cpu
  * IRQD_AFFINITY_SET		- Interrupt affinity was set
  * IRQD_LEVEL			- Interrupt is level triggered
  * IRQD_WAKEUP_STATE		- Interrupt is configured for wakeup
  *				  from suspend
- * IRDQ_MOVE_PCNTXT		- Interrupt can be moved in process
+ * IRQD_MOVE_PCNTXT		- Interrupt can be moved in process
  *				  context
- *				  		- 中断能够在进程上下文中迁移
  * IRQD_IRQ_DISABLED		- Disabled state of the interrupt
  * IRQD_IRQ_MASKED		- Masked state of the interrupt
  * IRQD_IRQ_INPROGRESS		- In progress state of the interrupt
@@ -405,6 +403,7 @@ struct irq_chip {
  * IRQCHIP_ONOFFLINE_ENABLED:	Only call irq_on/off_line callbacks
  *				when irq enabled
  * IRQCHIP_SKIP_SET_WAKE:	Skip chip.irq_set_wake(), for this irq chip
+ * 							(跳过芯片唤醒)
  * IRQCHIP_ONESHOT_SAFE:	One shot does not require mask/unmask
  * IRQCHIP_EOI_THREADED:	Chip requires eoi() on unmask in threaded mode
  */

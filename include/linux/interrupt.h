@@ -50,6 +50,8 @@
  * IRQF_ONESHOT - Interrupt is not reenabled after the hardirq handler finished.
  *                Used by threaded interrupts which need to keep the
  *                irq line disabled until the threaded handler has been run.
+ *                (中断在硬件中断结束之后不会重新使能。
+ *                参考资料：https://lore.kernel.org/patchwork/patch/167452/)
  * IRQF_NO_SUSPEND - Do not disable this IRQ during suspend.  Does not guarantee
  *                   that this interrupt will wake the system from a suspended
  *                   state.  See Documentation/power/suspend-and-interrupts.txt
@@ -204,7 +206,7 @@ extern void resume_device_irqs(void);
 /**
  * struct irq_affinity_notify - context for notification of IRQ affinity changes
  * @irq:		Interrupt to which notification applies
- * @kref:		Reference count, for internal use
+ * @kref:		Reference count, for internal use(内部引用计数)
  * @work:		Work item, for internal use
  * @notify:		Function to be called on change.  This will be
  *			called in process context.

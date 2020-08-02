@@ -52,6 +52,7 @@ static DECLARE_TASKLET(resend_tasklet, resend_irqs, 0);
  * IRQ resend
  *
  * Is called with interrupts disabled and desc->lock held.
+ * (TODO:从 __enable_irq() 中调用时是不是不符合条件？)
  */
 void check_irq_resend(struct irq_desc *desc)
 {
@@ -60,6 +61,9 @@ void check_irq_resend(struct irq_desc *desc)
 	 * interrupts are resent by hardware when they are still
 	 * active. Clear the pending bit so suspend/resume does not
 	 * get confused.
+	 * 我们不会重新发送level类型中断。
+	 * level型中断会由硬件重新发送，如果中断人然处于激活状态，
+	 * 清空挂起标识位，所以挂起/恢复不会迷惑。
 	 */
 	if (irq_settings_is_level(desc)) {
 		desc->istate &= ~IRQS_PENDING;

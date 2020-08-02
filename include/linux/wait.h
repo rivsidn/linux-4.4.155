@@ -249,6 +249,7 @@ __out:	__ret;								\
 
 /**
  * wait_event - sleep until a condition gets true
+ * 				(休眠直到满足条件)
  * @wq: the waitqueue to wait on
  * @condition: a C expression for the event to wait for
  *

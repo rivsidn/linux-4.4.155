@@ -25,6 +25,7 @@
  * @desc:      description of the interrupt
  *
  * Handles spurious and unhandled IRQ's. It also prints a debugmessage.
+ * (处理假的或者尚未安装的中断，并打印debugmessage)
  */
 void handle_bad_irq(struct irq_desc *desc)
 {
@@ -60,6 +61,8 @@ void __irq_wake_thread(struct irq_desc *desc, struct irqaction *action)
 	 * In case the thread crashed and was killed we just pretend that
 	 * we handled the interrupt. The hardirq handler has disabled the
 	 * device interrupt, so no irq storm is lurking.
+	 * 线程崩溃被杀掉的情况下，我们仅仅是假装处理该中断。
+	 * 硬件中断处理函数禁止了设备中断，所以不会存在产生中断风暴的危险。
 	 */
 	if (action->thread->flags & PF_EXITING)
 		return;
@@ -75,10 +78,13 @@ void __irq_wake_thread(struct irq_desc *desc, struct irqaction *action)
 	 * It's safe to OR the mask lockless here. We have only two
 	 * places which write to threads_oneshot: This code and the
 	 * irq thread.
+	 * 此处不加锁操作mask是安全的，我们只有两处地方会写threads_oneshot：
+	 * 该处和中断线程。
 	 *
 	 * This code is the hard irq context and can never run on two
 	 * cpus in parallel. If it ever does we have more serious
 	 * problems than this bitmask.
+	 * 该处代码是硬件中断上下文中而且从来不会并行运行在两个cpu上。
 	 *
 	 * The irq threads of this irq which clear their "running" bit
 	 * in threads_oneshot are serialized via desc->lock against
@@ -115,6 +121,8 @@ void __irq_wake_thread(struct irq_desc *desc, struct irqaction *action)
 	 * released before we reach this point. The thread also checks
 	 * IRQTF_RUNTHREAD under desc->lock. If set it leaves
 	 * threads_oneshot untouched and runs the thread another time.
+	 *
+	 * TODO: 上边的描述需要琢磨一下
 	 */
 	desc->threads_oneshot |= action->thread_mask;
 
@@ -155,6 +163,8 @@ irqreturn_t handle_irq_event_percpu(struct irq_desc *desc)
 			/*
 			 * Catch drivers which return WAKE_THREAD but
 			 * did not set up a thread function
+			 * (捕获那些返回WAKE_THREAD但是没有设置中断线程
+			 * 函数的驱动程序)
 			 */
 			if (unlikely(!action->thread_fn)) {
 				warn_no_thread(irq, action);
@@ -173,9 +183,11 @@ irqreturn_t handle_irq_event_percpu(struct irq_desc *desc)
 		}
 
 		retval |= res;
-		action = action->next;
+		action = action->next;		//中断共享
 	}
 
+	//应该是将中断产生的随机性作为输入用于随机生成器
+	//该函数作用是做为输入，对中断功能没影响
 	add_interrupt_randomness(irq, flags);
 
 	if (!noirqdebug)
