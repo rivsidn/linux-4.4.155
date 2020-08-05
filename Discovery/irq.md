@@ -23,6 +23,6 @@ irq_get_desc_lock(unsigned int irq, unsigned long *flags, unsigned int check)
 2. forced thread 是什么意思？
 
 ## TODO
-kernel/irq/chip.c +440
+kernel/irq/generic-chip.c +277
 
 

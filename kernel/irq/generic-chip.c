@@ -1,5 +1,6 @@
 /*
  * Library implementing the most common irq chip callback functions
+ * (通用芯片回调函数实现)
  *
  * Copyright (C) 2011, Thomas Gleixner
  */
@@ -18,7 +19,7 @@ static LIST_HEAD(gc_list);
 static DEFINE_RAW_SPINLOCK(gc_lock);
 
 /**
- * irq_gc_noop - NOOP function
+ * irq_gc_noop - NOOP function(空操作函数)
  * @d: irq_data
  */
 void irq_gc_noop(struct irq_data *d)
@@ -173,6 +174,7 @@ void irq_gc_eoi(struct irq_data *d)
  * For chips where the wake from suspend functionality is not
  * configured in a separate register and the wakeup active state is
  * just stored in a bitmask.
+ * (对于没有单独唤醒寄存器的芯片，唤醒激活状态就是仅设置一下掩码)
  */
 int irq_gc_set_wake(struct irq_data *d, unsigned int on)
 {
@@ -191,6 +193,7 @@ int irq_gc_set_wake(struct irq_data *d, unsigned int on)
 	return 0;
 }
 
+//be: big endian
 static u32 irq_readl_be(void __iomem *addr)
 {
 	return ioread32be(addr);
@@ -201,6 +204,7 @@ static void irq_writel_be(u32 val, void __iomem *addr)
 	iowrite32be(val, addr);
 }
 
+//TODO: 需要跟一下这个函数
 static void
 irq_init_generic_chip(struct irq_chip_generic *gc, const char *name,
 		      int num_ct, unsigned int irq_base,
@@ -263,6 +267,7 @@ irq_gc_init_mask_cache(struct irq_chip_generic *gc, enum irq_gc_flags flags)
  * irq_alloc_domain_generic_chip - Allocate generic chips for an irq domain
  * @d:			irq domain for which to allocate chips
  * @irqs_per_chip:	Number of interrupts each chip handles
+ * 			(每个芯片的中断个数)
  * @num_ct:		Number of irq_chip_type instances associated with this
  * @name:		Name of the irq chip
  * @handler:		Default flow handler associated with these chips
@@ -290,7 +295,7 @@ int irq_alloc_domain_generic_chips(struct irq_domain *d, int irqs_per_chip,
 		return -EINVAL;
 
 	/* Allocate a pointer, generic chip and chiptypes for each chip */
-	sz = sizeof(*dgc) + numchips * sizeof(gc);
+	sz = sizeof(*dgc) + numchips * sizeof(gc);	//此处申请的是指针sizeof(gc);
 	sz += numchips * (sizeof(*gc) + num_ct * sizeof(struct irq_chip_type));
 
 	tmp = dgc = kzalloc(sz, GFP_KERNEL);
@@ -331,7 +336,7 @@ EXPORT_SYMBOL_GPL(irq_alloc_domain_generic_chips);
 /**
  * irq_get_domain_generic_chip - Get a pointer to the generic chip of a hw_irq
  * @d:			irq domain pointer
- * @hw_irq:		Hardware interrupt number
+ * @hw_irq:		Hardware interrupt number(硬件中断号)
  */
 struct irq_chip_generic *
 irq_get_domain_generic_chip(struct irq_domain *d, unsigned int hw_irq)

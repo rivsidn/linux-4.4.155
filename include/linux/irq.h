@@ -837,10 +837,12 @@ struct irq_chip_generic {
 /**
  * enum irq_gc_flags - Initialization flags for generic irq chips
  * @IRQ_GC_INIT_MASK_CACHE:	Initialize the mask_cache by reading mask reg
+ * 							(通过读掩码寄存器初始化mask_cache)
  * @IRQ_GC_INIT_NESTED_LOCK:	Set the lock class of the irqs to nested for
  *				irq chips which need to call irq_set_wake() on
  *				the parent irq. Usually GPIO implementations
  * @IRQ_GC_MASK_CACHE_PER_TYPE:	Mask cache is chip type private
+ * 								(Mask cache 是芯片类型的私有数据)
  * @IRQ_GC_NO_MASK:		Do not calculate irq_data->mask
  * @IRQ_GC_BE_IO:		Use big-endian register accesses (default: LE)
  */

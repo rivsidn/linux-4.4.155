@@ -1072,7 +1072,7 @@ int irq_chip_set_wake_parent(struct irq_data *data, unsigned int on)
 #endif
 
 /**
- * irq_chip_compose_msi_msg - Componse msi message for a irq chip
+ * irq_chip_compose_msi_msg - Compose msi message for a irq chip
  * @data:	Pointer to interrupt specific data
  * @msg:	Pointer to the MSI message
  *
