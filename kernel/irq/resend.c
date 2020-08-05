@@ -5,12 +5,17 @@
  * Copyright (C) 2005-2006, Thomas Gleixner
  *
  * This file contains the IRQ-resend code
+ * (该文件中是中断重发送代码)
  *
  * If the interrupt is waiting to be processed, we try to re-run it.
  * We can't directly run it from here since the caller might be in an
  * interrupt-protected region. Not all irq controller chips can
  * retrigger interrupts at the hardware level, so in those cases
  * we allow the resending of IRQs via a tasklet.
+ * (如果中断等待被处理我们尝试重新运行它。
+ * 我们不能在此处直接重新运行他们因为调用者可能处于中断保护临界区。
+ * 不是所有的中断控制器芯片支持在硬件层面重新触发中断功能，所以在
+ * 这种情况下我需要通过tasklet重新发送中断)
  */
 
 #include <linux/irq.h>
@@ -27,6 +32,7 @@ static DECLARE_BITMAP(irqs_resend, IRQ_BITMAP_BITS);
 
 /*
  * Run software resends of IRQ's
+ * (通过软件重新发送中断)
  */
 static void resend_irqs(unsigned long arg)
 {
@@ -52,6 +58,8 @@ static DECLARE_TASKLET(resend_tasklet, resend_irqs, 0);
  * IRQ resend
  *
  * Is called with interrupts disabled and desc->lock held.
+ * (被调用时，必须关中断并且获取到了desc->lock锁)
+ *
  * (TODO:从 __enable_irq() 中调用时是不是不符合条件？)
  */
 void check_irq_resend(struct irq_desc *desc)
@@ -77,7 +85,7 @@ void check_irq_resend(struct irq_desc *desc)
 
 		if (!desc->irq_data.chip->irq_retrigger ||
 		    !desc->irq_data.chip->irq_retrigger(&desc->irq_data)) {
-#ifdef CONFIG_HARDIRQS_SW_RESEND
+#ifdef CONFIG_HARDIRQS_SW_RESEND	//基于tasklet的硬件中断重新发送机制
 			unsigned int irq = irq_desc_get_irq(desc);
 
 			/*
@@ -85,6 +93,7 @@ void check_irq_resend(struct irq_desc *desc)
 			 * context of the parent irq we need to be
 			 * careful, because we cannot trigger it
 			 * directly.
+			 * TODO：没理解
 			 */
 			if (irq_settings_is_nested_thread(desc)) {
 				/*

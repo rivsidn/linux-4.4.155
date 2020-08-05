@@ -121,6 +121,7 @@ EXPORT_SYMBOL_GPL(__devres_alloc_node);
 #else
 /**
  * devres_alloc - Allocate device resource data
+ * 				  (申请设备资源数据)
  * @release: Release function devres will be associated with
  * @size: Allocation size
  * @gfp: Allocation flags

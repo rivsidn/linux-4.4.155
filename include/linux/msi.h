@@ -40,6 +40,7 @@ struct platform_msi_desc {
 
 /**
  * struct msi_desc - Descriptor structure for MSI based interrupts
+ * 					 (MSI中断描述符结构体)
  * @list:	List head for management
  * @irq:	The base interrupt number
  * @nvec_used:	The number of vectors used

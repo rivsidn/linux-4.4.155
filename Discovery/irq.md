@@ -17,7 +17,12 @@ irq_get_desc_lock(unsigned int irq, unsigned long *flags, unsigned int check)
 #define IRQ_GET_DESC_CHECK_GLOBAL   (_IRQ_DESC_CHECK)
 ```
 
+## QUES
+### manage.c
+1. struct irqaction {} 中的 secondary 是做什么用的？
+2. forced thread 是什么意思？
+
 ## TODO
-kernel/irq/manage.c +797
+kernel/irq/chip.c +440
 
 

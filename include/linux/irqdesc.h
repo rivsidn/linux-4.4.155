@@ -32,7 +32,7 @@ struct pt_regs;
  * @affinity_hint:	hint to user space for preferred irq affinity(中断亲和性提示)
  * @affinity_notify:	context for notification of affinity changes
  * @pending_mask:	pending rebalanced interrupts
- * @threads_oneshot:	bitfield to handle shared oneshot threads
+ * @threads_oneshot:	bitfield to handle shared oneshot threads(处理共享oneshot位域)
  * @threads_active:	number of irqaction threads currently running
  * @wait_for_threads:	wait queue for sync_irq to wait for threaded handlers
  * @nr_actions:		number of installed actions on this descriptor

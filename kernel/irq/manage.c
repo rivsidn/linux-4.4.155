@@ -792,7 +792,7 @@ static int irq_wait_for_interrupt(struct irqaction *action)
  * handler finished. unmask if the interrupt has not been disabled and
  * is marked MASKED.
  * (Oneshot中断处理在线程结束前中断线都是屏蔽状态，执行结束之后需要
- * 接触屏蔽)
+ * 解除屏蔽)
  */
 static void irq_finalize_oneshot(struct irq_desc *desc,
 				 struct irqaction *action)
@@ -812,11 +812,16 @@ again:
 	 * on the other CPU. If we unmask the irq line then the
 	 * interrupt can come in again and masks the line, leaves due
 	 * to IRQS_INPROGRESS and the irq line is masked forever.
+	 * (线程比在其他核上的硬件中断处理更快完成，如果我们解除屏蔽了
+	 * 中断，中断可以到来且屏蔽中断，因为此时处理IRQS_INPROGRESS
+	 * 状态，所以中断会一直处于屏蔽状态)
 	 *
 	 * This also serializes the state of shared oneshot handlers
 	 * versus "desc->threads_onehsot |= action->thread_mask;" in
 	 * irq_wake_thread(). See the comment there which explains the
 	 * serialization.
+	 * (该部分还跟 irq_wake_thread() 中的处理一起串行化共享oneshot
+	 * 中断处理函数)
 	 */
 	if (unlikely(irqd_irq_inprogress(&desc->irq_data))) {
 		raw_spin_unlock_irq(&desc->lock);
@@ -847,6 +852,7 @@ out_unlock:
 #ifdef CONFIG_SMP
 /*
  * Check whether we need to change the affinity of the interrupt thread.
+ * (检查我们是否需要改变中断线程亲和性)
  */
 static void
 irq_thread_check_affinity(struct irq_desc *desc, struct irqaction *action)
@@ -878,10 +884,10 @@ irq_thread_check_affinity(struct irq_desc *desc, struct irqaction *action)
 	raw_spin_unlock_irq(&desc->lock);
 
 	if (valid)
-		set_cpus_allowed_ptr(current, mask);
+		set_cpus_allowed_ptr(current, mask);	//TODO: 调度相关
 	free_cpumask_var(mask);
 }
-#else
+#else	//CONFIG_SMP
 static inline void
 irq_thread_check_affinity(struct irq_desc *desc, struct irqaction *action) { }
 #endif
@@ -891,6 +897,7 @@ irq_thread_check_affinity(struct irq_desc *desc, struct irqaction *action) { }
  * interrupts rely on the implicit bh/preempt disable of the hard irq
  * context. So we need to disable bh here to avoid deadlocks and other
  * side effects.
+ * (关闭后半段，避免死锁或其他负面影响)
  */
 static irqreturn_t
 irq_forced_thread_fn(struct irq_desc *desc, struct irqaction *action)
@@ -908,6 +915,8 @@ irq_forced_thread_fn(struct irq_desc *desc, struct irqaction *action)
  * Interrupts explicitly requested as threaded interrupts want to be
  * preemtible - many of them need to sleep and wait for slow busses to
  * complete.
+ * (明确要求中断县城可以被调度的中断，可以他们需要休眠等待慢速总线设备
+ * 结束)
  */
 static irqreturn_t irq_thread_fn(struct irq_desc *desc,
 		struct irqaction *action)
@@ -925,6 +934,7 @@ static void wake_threads_waitq(struct irq_desc *desc)
 		wake_up(&desc->wait_for_threads);
 }
 
+//dtor 析构函数
 static void irq_thread_dtor(struct callback_head *unused)
 {
 	struct task_struct *tsk = current;
@@ -938,7 +948,6 @@ static void irq_thread_dtor(struct callback_head *unused)
 
 	pr_err("exiting task \"%s\" (%d) is an active IRQ thread (irq %d)\n",
 	       tsk->comm, tsk->pid, action->irq);
-
 
 	desc = irq_to_desc(action->irq);
 	/*
@@ -1015,6 +1024,7 @@ static int irq_thread(void *data)
 
 /**
  *	irq_wake_thread - wake the irq thread for the action identified by dev_id
+ *					  (唤醒通过dev_id确认的中断线程)
  *	@irq:		Interrupt line
  *	@dev_id:	Device identity for which the thread should be woken
  *
@@ -1050,6 +1060,7 @@ static int irq_setup_forced_threading(struct irqaction *new)
 	/*
 	 * No further action required for interrupts which are requested as
 	 * threaded interrupts already
+	 * (已经设置了的不需要执行其他动作)
 	 */
 	if (new->handler == irq_default_primary_handler)
 		return 0;
@@ -1060,6 +1071,8 @@ static int irq_setup_forced_threading(struct irqaction *new)
 	 * Handle the case where we have a real primary handler and a
 	 * thread handler. We force thread them as well by creating a
 	 * secondary action.
+	 * (处理这种情况，我们已经有了真正的主要处理函数和线程处理函数，
+	 * 我们通过创建一个二级action来实现线程化)
 	 */
 	if (new->handler && new->thread_fn) {
 		/* Allocate the secondary action */
@@ -1073,6 +1086,7 @@ static int irq_setup_forced_threading(struct irqaction *new)
 		new->secondary->name = new->name;
 	}
 	/* Deal with the primary handler */
+	/* TODO: 理解此处的操作 */
 	set_bit(IRQTF_FORCED_THREAD, &new->thread_flags);
 	new->thread_fn = new->handler;
 	new->handler = irq_default_primary_handler;
@@ -1122,6 +1136,8 @@ setup_irq_thread(struct irqaction *new, unsigned int irq, bool secondary)
 	 * We keep the reference to the task struct even if
 	 * the thread dies to avoid that the interrupt code
 	 * references an already freed task_struct.
+	 * (增加task struct的引用计数，避免中断代码引用已经
+	 * 释放了得内存)
 	 */
 	get_task_struct(t);
 	new->thread = t;
@@ -1133,6 +1149,11 @@ setup_irq_thread(struct irqaction *new, unsigned int irq, bool secondary)
 	 * interrupts marked with IRQF_NO_BALANCE this is
 	 * correct as we want the thread to move to the cpu(s)
 	 * on which the requesting code placed the interrupt.
+	 *
+	 * (通知中断线程设置他的亲和性，这步很重要因为我们不会
+	 * 为二级处理函数调用setup_affinity()因为所有的东西都
+	 * 已经建立了。该代码对于不均衡中断也是真缺的，因为我
+	 * 们希望线程迁移到我们要求的CPU上)
 	 */
 	set_bit(IRQTF_AFFINITY, &new->thread_flags);
 	return 0;
@@ -1141,6 +1162,8 @@ setup_irq_thread(struct irqaction *new, unsigned int irq, bool secondary)
 /*
  * Internal function to register an irqaction - typically used to
  * allocate special interrupts that are part of the architecture.
+ *
+ * (注册irqaction的内部函数，通常用于架构申请特殊中断。)
  */
 static int
 __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
@@ -1163,6 +1186,7 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
 	/*
 	 * Check whether the interrupt nests into another interrupt
 	 * thread.
+	 * (检查中断是否嵌套调用到其他中断线程中)
 	 */
 	nested = irq_settings_is_nested_thread(desc);
 	if (nested) {
@@ -1188,6 +1212,8 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
 	 * Create a handler thread when a thread function is supplied
 	 * and the interrupt does not nest into another interrupt
 	 * thread.
+	 * (当提供了线程函数的时候创建一个线程处理函数，而且该线程不会
+	 * 递归调用到其他中断线程中)
 	 */
 	if (new->thread_fn && !nested) {
 		ret = setup_irq_thread(new, irq, false);
@@ -1447,6 +1473,7 @@ out_mput:
  *	@act: irqaction for the interrupt
  *
  * Used to statically setup interrupts in the early boot process.
+ * (用于启动最初的程序静态的设置中断)
  */
 int setup_irq(unsigned int irq, struct irqaction *act)
 {
@@ -1563,6 +1590,7 @@ static struct irqaction *__free_irq(unsigned int irq, void *dev_id)
  *	@act: irqaction for the interrupt
  *
  * Used to remove interrupts statically setup by the early boot process.
+ * (用于移除启动最初程序静态设置的中断)
  */
 void remove_irq(unsigned int irq, struct irqaction *act)
 {
@@ -1692,11 +1720,11 @@ int request_threaded_irq(unsigned int irq, irq_handler_t handler,
 	action->dev_id = dev_id;
 
 	chip_bus_lock(desc);
-	retval = __setup_irq(irq, desc, action);
+	retval = __setup_irq(irq, desc, action);	//TODO: 跟一下这个代码
 	chip_bus_sync_unlock(desc);
 
 	if (retval) {
-		kfree(action->secondary);
+		kfree(action->secondary);				//TODO：为什么要释放secondary
 		kfree(action);
 	}
 
@@ -1736,9 +1764,11 @@ EXPORT_SYMBOL(request_threaded_irq);
  *	interrupt line and IRQ handling. It selects either a
  *	hardirq or threaded handling method depending on the
  *	context.
+ *	(基于上下文选定特定的中断处理机制)
  *
  *	On failure, it returns a negative value. On success,
  *	it returns either IRQC_IS_HARDIRQ or IRQC_IS_NESTED.
+ *	(失败返回负值，成功返回IRQC_IS_HARDIRQ或IRQC_IS_NESTED)
  */
 int request_any_context_irq(unsigned int irq, irq_handler_t handler,
 			    unsigned long flags, const char *name, void *dev_id)
@@ -1850,6 +1880,7 @@ bad:
  *	@act: irqaction for the interrupt
  *
  * Used to remove interrupts statically setup by the early boot process.
+ * (用于移除在启动初期静态设置的中断)
  */
 void remove_percpu_irq(unsigned int irq, struct irqaction *act)
 {
@@ -1870,6 +1901,7 @@ void remove_percpu_irq(unsigned int irq, struct irqaction *act)
  *	until any executing interrupts for this IRQ have completed.
  *
  *	This function must not be called from interrupt context.
+ *	(该函数不能在中断上下文中被调用)
  */
 void free_percpu_irq(unsigned int irq, void __percpu *dev_id)
 {
@@ -1890,6 +1922,7 @@ EXPORT_SYMBOL_GPL(free_percpu_irq);
  *	@act: irqaction for the interrupt
  *
  * Used to statically setup per-cpu interrupts in the early boot process.
+ * (用于在启动初期静态设置每cpu中断)
  */
 int setup_percpu_irq(unsigned int irq, struct irqaction *act)
 {
@@ -1907,6 +1940,7 @@ int setup_percpu_irq(unsigned int irq, struct irqaction *act)
 
 /**
  *	request_percpu_irq - allocate a percpu interrupt line
+ *						 (申请一个每CPU中断)
  *	@irq: Interrupt line to allocate
  *	@handler: Function to be called when the IRQ occurs.
  *	@devname: An ascii name for the claiming device
@@ -1968,6 +2002,7 @@ EXPORT_SYMBOL_GPL(request_percpu_irq);
  *
  *	This function should be called with preemption disabled if the
  *	interrupt controller has per-cpu registers.
+ *	(如果中断控制器有per-cpu寄存器调用该函数时该禁止抢占)
  */
 int irq_get_irqchip_state(unsigned int irq, enum irqchip_irq_state which,
 			  bool *state)
@@ -2005,6 +2040,7 @@ EXPORT_SYMBOL_GPL(irq_get_irqchip_state);
 
 /**
  *	irq_set_irqchip_state - set the state of a forwarded interrupt.
+ *							(设置前端中断的状态)
  *	@irq: Interrupt line that is forwarded to a VM
  *	@which: State to be restored (one of IRQCHIP_STATE_*)
  *	@val: Value corresponding to @which

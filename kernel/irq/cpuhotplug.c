@@ -49,6 +49,7 @@ static bool migrate_one_irq(struct irq_desc *desc)
 
 /**
  * irq_migrate_all_off_this_cpu - Migrate irqs away from offline cpu
+ * 								  (将中断从掉线的cpu上迁移出去)
  *
  * The current CPU has been marked offline.  Migrate IRQs off this CPU.
  * If the affinity settings do not allow other CPUs, force them onto any

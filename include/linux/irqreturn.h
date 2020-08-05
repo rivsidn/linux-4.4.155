@@ -4,8 +4,11 @@
 /**
  * enum irqreturn
  * @IRQ_NONE		interrupt was not from this device or was not handled
+ * 					(中断不来自于该设备或未处理)
  * @IRQ_HANDLED		interrupt was handled by this device
+ * 					(中断被该设备处理)
  * @IRQ_WAKE_THREAD	handler requests to wake the handler thread
+ * 					(中断请求唤醒处理线程)
  */
 enum irqreturn {
 	IRQ_NONE		= (0 << 0),

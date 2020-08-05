@@ -6,6 +6,7 @@
  *
  * This file contains the core interrupt handling code, for irq-chip
  * based architectures.
+ * (中断处理核心代码)
  *
  * Detailed information is available in Documentation/DocBook/genericirq
  */
@@ -30,6 +31,7 @@ static irqreturn_t bad_chained_irq(int irq, void *dev_id)
 /*
  * Chained handlers should never call action on their IRQ. This default
  * action will emit warning if such thing happens.
+ * (该函数不应该被调用，如果此类事情发生了会触发warning)
  */
 struct irqaction chained_action = {
 	.handler = bad_chained_irq,
@@ -37,7 +39,6 @@ struct irqaction chained_action = {
 
 /**
  *	irq_set_chip - set the irq chip for an irq
- *				   为中断设置irq chip
  *	@irq:	irq number
  *	@chip:	pointer to irq chip description structure
  */
@@ -65,6 +66,7 @@ EXPORT_SYMBOL(irq_set_chip);
 
 /**
  *	irq_set_type - set the irq trigger type for an irq
+ *				   (设置中断触发类型)
  *	@irq:	irq number
  *	@type:	IRQ_TYPE_{LEVEL,EDGE}_* value - see include/linux/irq.h
  */
@@ -111,6 +113,7 @@ EXPORT_SYMBOL(irq_set_handler_data);
  *	@entry:		Pointer to MSI descriptor data
  *
  *	Set the MSI descriptor entry for an irq at offset
+ *	(为中断设置MSI描述符表项)
  */
 int irq_set_msi_desc_off(unsigned int irq_base, unsigned int irq_offset,
 			 struct msi_desc *entry)
@@ -370,6 +373,8 @@ static bool irq_check_poll(struct irq_desc *desc)
 	return irq_wait_for_poll(desc);
 }
 
+//中断是否可以运行
+//ture表示可以运行；false表示不能运行
 static bool irq_may_run(struct irq_desc *desc)
 {
 	unsigned int mask = IRQD_IRQ_INPROGRESS | IRQD_WAKEUP_ARMED;

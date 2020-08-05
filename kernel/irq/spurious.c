@@ -4,6 +4,7 @@
  * Copyright (C) 1992, 1998-2004 Linus Torvalds, Ingo Molnar
  *
  * This file contains spurious interrupt handling.
+ * (杂乱中断处理代码)
  */
 
 #include <linux/jiffies.h>
@@ -30,6 +31,7 @@ static atomic_t irq_poll_active;
  * If the poll runs on this CPU, then we yell loudly and return
  * false. That will leave the interrupt line disabled in the worst
  * case, but it should never happen.
+ * TODO: 理解一下
  *
  * We wait until the poller is done and then recheck disabled and
  * action (about to be disabled). Only if it's still active, we return
@@ -59,6 +61,7 @@ bool irq_wait_for_poll(struct irq_desc *desc)
 
 /*
  * Recovery handler for misrouted interrupts.
+ * (错误路径选择中断程序恢复程序)
  */
 static int try_one_irq(struct irq_desc *desc, bool force)
 {
@@ -184,6 +187,8 @@ static inline int bad_action_ret(irqreturn_t action_ret)
  * If 99,900 of the previous 100,000 interrupts have not been handled
  * then assume that the IRQ is stuck in some manner. Drop a diagnostic
  * and try to turn the IRQ off.
+ * (如果有大量中断没被处理，我们假定中断存在某些问题，放弃诊断该问题转
+ * 而将关闭中断)
  *
  * (The other 100-of-100,000 interrupts may have been a correctly
  *  functioning device sharing an IRQ with the failing one)
@@ -209,6 +214,8 @@ static void __report_bad_irq(struct irq_desc *desc, irqreturn_t action_ret)
 	 * w/o desc->lock held, but IRQ_PROGRESS set. We might race
 	 * with something else removing an action. It's ok to take
 	 * desc->lock here. See synchronize_irq().
+	 *
+	 * TODO: 需要理解上边
 	 */
 	raw_spin_lock_irqsave(&desc->lock, flags);
 	action = desc->action;
@@ -319,6 +326,10 @@ void note_interrupt(struct irq_desc *desc, irqreturn_t action_ret)
 			 * thread_handled_last is only accessed here
 			 * and we have the guarantee that hard
 			 * interrupts are not reentrant.
+			 * (我们用thread_handled_last中的第31位来表示
+			 * 推出虚假中断检测活动，此处不需要加锁，因为
+			 * 只有此处会访问thread_handled_last变量而且我
+			 * 们确保中断不是可重入的)
 			 */
 			if (!(desc->threads_handled_last & SPURIOUS_DEFERRED)) {
 				desc->threads_handled_last |= SPURIOUS_DEFERRED;
@@ -430,6 +441,7 @@ void note_interrupt(struct irq_desc *desc, irqreturn_t action_ret)
 
 bool noirqdebug __read_mostly;
 
+//关闭中断锁定检测功能
 int noirqdebug_setup(char *str)
 {
 	noirqdebug = 1;
@@ -442,6 +454,7 @@ __setup("noirqdebug", noirqdebug_setup);
 module_param(noirqdebug, bool, 0644);
 MODULE_PARM_DESC(noirqdebug, "Disable irq lockup detection when true");
 
+//未路由中断修复功能支持，该功能可能会影响系统性能
 static int __init irqfixup_setup(char *str)
 {
 	irqfixup = 1;
@@ -454,6 +467,7 @@ static int __init irqfixup_setup(char *str)
 __setup("irqfixup", irqfixup_setup);
 module_param(irqfixup, int, 0644);
 
+//未路由中断修复和轮询支持使能，该功能可能会显著影响系统性能
 static int __init irqpoll_setup(char *str)
 {
 	irqfixup = 2;

@@ -3,6 +3,7 @@
  * Copyright (C) 2005-2006, Thomas Gleixner, Russell King
  *
  * This file contains the dummy interrupt chip implementation
+ * (虚设中断芯片实现代码)
  */
 #include <linux/interrupt.h>
 #include <linux/irq.h>
@@ -34,6 +35,7 @@ static unsigned int noop_ret(struct irq_data *data)
 
 /*
  * Generic no controller implementation
+ * (通用无控制器实现)
  */
 struct irq_chip no_irq_chip = {
 	.name		= "none",

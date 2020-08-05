@@ -5,6 +5,7 @@
 
 /*
  * Device resource management aware IRQ request/free implementation.
+ * (能够感知中断申请/释放的设备资源管理代码实现)
  */
 struct irq_devres {
 	unsigned int irq;
@@ -27,6 +28,7 @@ static int devm_irq_match(struct device *dev, void *res, void *data)
 
 /**
  *	devm_request_threaded_irq - allocate an interrupt line for a managed device
+ *								(为管理的设备申请一个中断线路)
  *	@dev: device to request interrupt for
  *	@irq: Interrupt line to allocate
  *	@handler: Function to be called when the IRQ occurs
@@ -103,6 +105,7 @@ int devm_request_any_context_irq(struct device *dev, unsigned int irq,
 	if (!dr)
 		return -ENOMEM;
 
+	//TODO: 这个跟上个有什么区别？
 	rc = request_any_context_irq(irq, handler, irqflags, devname, dev_id);
 	if (rc < 0) {
 		devres_free(dr);
