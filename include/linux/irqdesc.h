@@ -229,6 +229,7 @@ static inline int irq_is_percpu(unsigned int irq)
 	return desc->status_use_accessors & IRQ_PER_CPU;
 }
 
+//TODO: 这个函数是用来干啥的？
 static inline void
 irq_set_lockdep_class(unsigned int irq, struct lock_class_key *class)
 {

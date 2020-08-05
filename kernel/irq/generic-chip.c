@@ -376,6 +376,7 @@ int irq_map_generic_chip(struct irq_domain *d, unsigned int virq,
 	if (!d->gc)
 		return -ENODEV;
 
+	//通过 hw_irq 找到对应的 irq_chip_generic
 	idx = hw_irq / dgc->irqs_per_chip;
 	if (idx >= dgc->num_chips)
 		return -EINVAL;
@@ -393,6 +394,7 @@ int irq_map_generic_chip(struct irq_domain *d, unsigned int virq,
 	chip = &ct->chip;
 
 	/* We only init the cache for the first mapping of a generic chip */
+	/* 只在第一次映射的时候初始化缓存 */
 	if (!gc->installed) {
 		raw_spin_lock_irqsave(&gc->lock, flags);
 		irq_gc_init_mask_cache(gc, dgc->gc_flags);
@@ -416,6 +418,7 @@ int irq_map_generic_chip(struct irq_domain *d, unsigned int virq,
 }
 EXPORT_SYMBOL_GPL(irq_map_generic_chip);
 
+//TODO: 对比上边的map函数，unmap 少了一部分，这部分为什么不需要关注
 static void irq_unmap_generic_chip(struct irq_domain *d, unsigned int virq)
 {
 	struct irq_data *data = irq_domain_get_irq_data(d, virq);
@@ -433,7 +436,6 @@ static void irq_unmap_generic_chip(struct irq_domain *d, unsigned int virq)
 	clear_bit(irq_idx, &gc->installed);
 	irq_domain_set_info(d, virq, hw_irq, &no_irq_chip, NULL, NULL, NULL,
 			    NULL);
-
 }
 
 struct irq_domain_ops irq_generic_chip_ops = {
@@ -454,6 +456,7 @@ EXPORT_SYMBOL_GPL(irq_generic_chip_ops);
  * Set up max. 32 interrupts starting from gc->irq_base. Note, this
  * initializes all interrupts to the primary irq_chip_type and its
  * associated handler.
+ * (设置最多32个从 gc->irq_base 开始的中断)
  */
 void irq_setup_generic_chip(struct irq_chip_generic *gc, u32 msk,
 			    enum irq_gc_flags flags, unsigned int clr,
@@ -469,6 +472,8 @@ void irq_setup_generic_chip(struct irq_chip_generic *gc, u32 msk,
 
 	irq_gc_init_mask_cache(gc, flags);
 
+	//msk 表示中断的偏移量，只有32bit，所以最多设置32个
+	//此处的 irq_base 指的是软件中断号
 	for (i = gc->irq_base; msk; msk >>= 1, i++) {
 		if (!(msk & 0x01))
 			continue;
@@ -494,6 +499,7 @@ EXPORT_SYMBOL_GPL(irq_setup_generic_chip);
 
 /**
  * irq_setup_alt_chip - Switch to alternative chip
+ * 			(切换到其他芯片)
  * @d:		irq_data for this interrupt
  * @type:	Flow type to be initialized
  *
@@ -505,6 +511,10 @@ int irq_setup_alt_chip(struct irq_data *d, unsigned int type)
 	struct irq_chip_type *ct = gc->chip_types;
 	unsigned int i;
 
+	//irq_data 中的chip 指向的是irq_chip_type{.chip} 的指针，
+	//而irq_chip_type 在irq_chip_generic 中可能有多个
+	//下边这段代码的意思是选取irq_chip_generic 中类型为 type 的irq_chip_type
+	//设置成 irq_data->chip 指向的 chip
 	for (i = 0; i < gc->num_ct; i++, ct++) {
 		if (ct->type & type) {
 			d->chip = &ct->chip;
@@ -524,6 +534,7 @@ EXPORT_SYMBOL_GPL(irq_setup_alt_chip);
  * @set:	IRQ_* bits to set
  *
  * Remove up to 32 interrupts starting from gc->irq_base.
+ * (移除最多32个从gc->irq_base 开始的中断)
  */
 void irq_remove_generic_chip(struct irq_chip_generic *gc, u32 msk,
 			     unsigned int clr, unsigned int set)
@@ -547,6 +558,7 @@ void irq_remove_generic_chip(struct irq_chip_generic *gc, u32 msk,
 }
 EXPORT_SYMBOL_GPL(irq_remove_generic_chip);
 
+//TODO: irq_data 和 irq_chip_generic 之间什么关系？
 static struct irq_data *irq_gc_get_irq_data(struct irq_chip_generic *gc)
 {
 	unsigned int virq;
@@ -557,6 +569,8 @@ static struct irq_data *irq_gc_get_irq_data(struct irq_chip_generic *gc)
 	/*
 	 * We don't know which of the irqs has been actually
 	 * installed. Use the first one.
+	 * (我们不知道具体安装了哪一个中断，所以用最先找到的
+	 * 哪一个)
 	 */
 	if (!gc->installed)
 		return NULL;

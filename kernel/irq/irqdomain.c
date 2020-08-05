@@ -863,6 +863,7 @@ EXPORT_SYMBOL_GPL(irq_domain_xlate_twocell);
  * Note: don't use this function unless your interrupt controller explicitly
  * supports both one and two cell bindings.  For the majority of controllers
  * the _onecell() or _twocell() variants above should be used.
+ * (前两个参数没用到)
  */
 int irq_domain_xlate_onetwocell(struct irq_domain *d,
 				struct device_node *ctrlr,

@@ -150,21 +150,23 @@ struct irq_common_data {
  * struct irq_data - per irq chip data passed down to chip functions
  * 				   - 每个中断芯片的数据，用于传递给芯片相关函数
  * @mask:		precomputed bitmask for accessing the chip registers
+ * 			(预先计算的bit掩码用于访问芯片寄存器)
  * @irq:		interrupt number
- * 				中断号
+ * 			(中断号)
  * @hwirq:		hardware interrupt number, local to the interrupt domain
- * 				硬件中断号,属于中断域
+ * 			(硬件中断号,属于中断域)
  * @common:		point to data shared by all irqchips
- * 				指向所有中断芯片的共享数据
+ * 			(指向所有中断芯片的共享数据)
  * @chip:		low level interrupt hardware access
- * 				底层中断硬件访问
+ * 			(底层中断硬件访问)
  * @domain:		Interrupt translation domain; responsible for mapping
  *			between hwirq number and linux irq number.
- *				中断转化域,用于硬件中断号和linux中断号映射.
+ *			(中断转化域,用于硬件中断号和linux中断号映射)
  * @parent_data:	pointer to parent struct irq_data to support hierarchy
  *			irq_domain
  * @chip_data:		platform-specific per-chip private data for the chip
  *			methods, to allow shared chip implementations
+ *			(平台特定的每个芯片的私有数据)
  */
 struct irq_data {
 	u32			mask;
@@ -338,6 +340,7 @@ static inline irq_hw_number_t irqd_to_hwirq(struct irq_data *d)
  *			when one ore more interrupts are installed
  * @irq_pm_shutdown:	function called from core code on shutdown once per chip
  * @irq_calc_mask:	Optional function to set irq_data.mask for special cases
+ * 			(可选功能，用于特殊情况下计算 irq_data.mask)
  * @irq_print_chip:	optional to print special chip info in show_interrupts
  * @irq_request_resources:	optional to request resources before calling
  *				any other callback related to this irq
@@ -758,6 +761,7 @@ struct irq_chip_regs {
 /**
  * struct irq_chip_type - Generic interrupt chip instance for a flow type
  * @chip:		The real interrupt chip which provides the callbacks
+ * 			(中断芯片，提供回调函数)
  * @regs:		Register offsets for this chip
  * @handler:		Flow handler associated with this chip
  * @type:		Chip can handle these flow types
@@ -767,7 +771,6 @@ struct irq_chip_regs {
  * A irq_generic_chip can have several instances of irq_chip_type when
  * it requires different functions and register offsets for different
  * flow types.
- * 一个irq_generic_chip 可能有多个不同的irq_chip_type.
  */
 struct irq_chip_type {
 	struct irq_chip		chip;
@@ -837,13 +840,14 @@ struct irq_chip_generic {
 /**
  * enum irq_gc_flags - Initialization flags for generic irq chips
  * @IRQ_GC_INIT_MASK_CACHE:	Initialize the mask_cache by reading mask reg
- * 							(通过读掩码寄存器初始化mask_cache)
+ * 				(通过读掩码寄存器初始化mask_cache)
  * @IRQ_GC_INIT_NESTED_LOCK:	Set the lock class of the irqs to nested for
  *				irq chips which need to call irq_set_wake() on
  *				the parent irq. Usually GPIO implementations
  * @IRQ_GC_MASK_CACHE_PER_TYPE:	Mask cache is chip type private
- * 								(Mask cache 是芯片类型的私有数据)
+ * 				(Mask cache 是芯片类型的私有数据)
  * @IRQ_GC_NO_MASK:		Do not calculate irq_data->mask
+ * 				(不需要计算 irq_data->mask)
  * @IRQ_GC_BE_IO:		Use big-endian register accesses (default: LE)
  */
 enum irq_gc_flags {

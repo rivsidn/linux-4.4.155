@@ -338,10 +338,11 @@ static int test_bit(int nr, const volatile unsigned long *addr);
 	 : variable_test_bit((nr), (addr)))
 
 /**
- * __ffs - find first set bit in word
+ * __ffs - find first set bit in word(在word中寻找第一个设置了的位)
  * @word: The word to search
  *
  * Undefined if no bit exists, so code should check against 0 first.
+ * (没有bit设置处于未定义状态，所以代码需要先检测是不是 0)
  */
 static inline unsigned long __ffs(unsigned long word)
 {
