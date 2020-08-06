@@ -558,7 +558,9 @@ void irq_remove_generic_chip(struct irq_chip_generic *gc, u32 msk,
 }
 EXPORT_SYMBOL_GPL(irq_remove_generic_chip);
 
-//TODO: irq_data 和 irq_chip_generic 之间什么关系？
+//irq_data 位于 irq_desc{} 中，每个软中断对应一个irq_desc{}结构体；
+//但是irq_chip_generic{} 中可能会有从irq_base 开始的irq_cnt 个中断，
+//此处的寻找就是找到其中任意一个中断的irq_data{}。
 static struct irq_data *irq_gc_get_irq_data(struct irq_chip_generic *gc)
 {
 	unsigned int virq;
@@ -591,7 +593,7 @@ static int irq_gc_suspend(void)
 			struct irq_data *data = irq_gc_get_irq_data(gc);
 
 			if (data)
-				ct->chip.irq_suspend(data);
+				ct->chip.irq_suspend(data);	//参见 irq_chip {.irq_suspend} 描述
 		}
 
 		if (gc->suspend)
@@ -614,7 +616,7 @@ static void irq_gc_resume(void)
 			struct irq_data *data = irq_gc_get_irq_data(gc);
 
 			if (data)
-				ct->chip.irq_resume(data);
+				ct->chip.irq_resume(data);	//参见 irq_chip {.irq_resume} 描述
 		}
 	}
 }
@@ -647,6 +649,7 @@ static struct syscore_ops irq_gc_syscore_ops = {
 
 static int __init irq_gc_init_ops(void)
 {
+	//TODO：这跑哪去了。。。
 	register_syscore_ops(&irq_gc_syscore_ops);
 	return 0;
 }

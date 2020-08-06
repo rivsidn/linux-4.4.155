@@ -4,6 +4,9 @@
  * Copyright (C) 1992, 1998-2004 Linus Torvalds, Ingo Molnar
  *
  * This file contains the interrupt probing code and driver APIs.
+ * (中断探测代码和驱动API)
+ *
+ * 20200806: 感觉该功能比较偏门，第一次阅读没详细看代码实现
  */
 
 #include <linux/irq.h>
@@ -18,6 +21,8 @@
  * Autodetection depends on the fact that any interrupt that
  * comes in on to an unassigned handler will get stuck with
  * "IRQS_WAITING" cleared and the interrupt disabled.
+ * (自动检测基于该事实：任意到来的中断，如果没有分配处理函数
+ * 会陷入到"IRQS_WAITING"清空状态且中断被禁止)
  */
 static DEFINE_MUTEX(probing_active);
 
@@ -26,6 +31,7 @@ static DEFINE_MUTEX(probing_active);
  *
  *	Commence probing for an interrupt. The interrupts are scanned
  *	and a mask of potential interrupt lines is returned.
+ *	(开始中断探测，扫描中断返回一个潜在的中断掩码)
  *
  */
 unsigned long probe_irq_on(void)
@@ -59,6 +65,7 @@ unsigned long probe_irq_on(void)
 	}
 
 	/* Wait for longstanding interrupts to trigger. */
+	/* 等待长期存在的中断被出发 */
 	msleep(20);
 
 	/*
@@ -78,11 +85,13 @@ unsigned long probe_irq_on(void)
 
 	/*
 	 * Wait for spurious interrupts to trigger
+	 * 等待虚假中断被触发
 	 */
 	msleep(100);
 
 	/*
 	 * Now filter out any obviously spurious interrupts
+	 * (过滤掉明显的虚假中断)
 	 */
 	for_each_irq_desc(i, desc) {
 		raw_spin_lock_irq(&desc->lock);
@@ -147,6 +156,8 @@ EXPORT_SYMBOL(probe_irq_mask);
  *	found then zero is returned. If more than one interrupt is
  *	found then minus the first candidate is returned to indicate
  *	their is doubt.
+ *	(扫描没用到的中断，返回可能被触发的中断。如果没有找到返回 0，
+ *	如果找到了多个返回第一个的负值)
  *
  *	The interrupt probe logic state is returned to its previous
  *	value.

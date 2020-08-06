@@ -237,6 +237,7 @@ EXPORT_SYMBOL_GPL(async_schedule_domain);
  * async_synchronize_full - synchronize all asynchronous function calls
  *
  * This function waits until all asynchronous function calls have been done.
+ * (该函数等待知道所有的异步调用结束)
  */
 void async_synchronize_full(void)
 {

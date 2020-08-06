@@ -47,6 +47,7 @@ static const struct file_operations proc_interrupts_operations = {
 
 static int __init proc_interrupts_init(void)
 {
+	//创建 /proc/interrupts 文件，显示中断信息
 	proc_create("interrupts", 0, NULL, &proc_interrupts_operations);
 	return 0;
 }

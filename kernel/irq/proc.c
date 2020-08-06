@@ -4,6 +4,7 @@
  * Copyright (C) 1992, 1998-2004 Linus Torvalds, Ingo Molnar
  *
  * This file contains the /proc/irq/ handling code.
+ * (/proc/irq/ 处理代码)
  */
 
 #include <linux/irq.h>
@@ -17,21 +18,28 @@
 #include "internals.h"
 
 /*
- * Access rules:
+ * Access rules(访问规则):
  *
  * procfs protects read/write of /proc/irq/N/ files against a
  * concurrent free of the interrupt descriptor. remove_proc_entry()
  * immediately prevents new read/writes to happen and waits for
  * already running read/write functions to complete.
+ * (procfs保障读写 /proc/irq/N/ 文件与释放中断描述符之间的并行操作。
+ * remove_proc_entry()避免读写操作产生并且等待已经产生的读写操作完
+ * 成)
  *
  * We remove the proc entries first and then delete the interrupt
  * descriptor from the radix tree and free it. So it is guaranteed
  * that irq_to_desc(N) is valid as long as the read/writes are
  * permitted by procfs.
+ * (我们先删除proc 文件再从radix树中删除并释放中断描述符，所以当procfs
+ * 读写操作允许的时候，irq_to_desc(N)一定是存在的)
  *
  * The read from /proc/interrupts is a different problem because there
  * is no protection. So the lookup and the access to irqdesc
  * information must be protected by sparse_irq_lock.
+ * (从 /proc/interrupts 文件中读取数据是不同的，因为此处没有保护，所以
+ * 查询和访问中断描述符信息时必须通过sparse_irq_lock保护)
  */
 static struct proc_dir_entry *root_irq_dir;
 
