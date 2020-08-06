@@ -414,6 +414,7 @@ static void register_default_affinity_proc(void)
 #endif
 }
 
+//初始化 /porc/irq/ 文件
 void init_irq_proc(void)
 {
 	unsigned int irq;
@@ -428,6 +429,7 @@ void init_irq_proc(void)
 
 	/*
 	 * Create entries for all existing IRQs.
+	 * (为每个存在的中断创建一个目录)
 	 */
 	for_each_irq_desc(irq, desc) {
 		if (!desc)
@@ -439,6 +441,7 @@ void init_irq_proc(void)
 
 #ifdef CONFIG_GENERIC_IRQ_SHOW
 
+//__weak 表示如果有重名函数则调用另一个函数
 int __weak arch_show_interrupts(struct seq_file *p, int prec)
 {
 	return 0;
@@ -448,6 +451,7 @@ int __weak arch_show_interrupts(struct seq_file *p, int prec)
 # define ACTUAL_NR_IRQS nr_irqs
 #endif
 
+/* cat /proc/interrupts 内容显示 */
 int show_interrupts(struct seq_file *p, void *v)
 {
 	static int prec;

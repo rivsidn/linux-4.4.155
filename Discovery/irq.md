@@ -34,7 +34,4 @@ void irq_domain_set_info(struct irq_domain *domain, unsigned int virq,
 2. forced thread 是什么意思？
 
 ## TODO
-kernel/irq/proc.c
-
-
-
+kernel/irq/pm.c +118

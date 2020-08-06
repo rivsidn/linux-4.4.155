@@ -55,10 +55,13 @@
  * IRQF_NO_SUSPEND - Do not disable this IRQ during suspend.  Does not guarantee
  *                   that this interrupt will wake the system from a suspended
  *                   state.  See Documentation/power/suspend-and-interrupts.txt
+ *                   (系统挂起的时候不关闭该中断，不确保该中断会将系统唤醒)
  * IRQF_FORCE_RESUME - Force enable it on resume even if IRQF_NO_SUSPEND is set
+ * 		(唤醒时强制使能该中断即使设置了IRQF_NO_SUSPEND 标识位)
  * IRQF_NO_THREAD - Interrupt cannot be threaded
  * IRQF_EARLY_RESUME - Resume IRQ early during syscore instead of at device
  *                resume time.
+ *                (在syscore 时候唤醒设备)
  * IRQF_COND_SUSPEND - If the IRQ is shared with a NO_SUSPEND user, execute this
  *                interrupt handler after suspending interrupts. For system
  *                wakeup devices users need to implement wakeup detection in

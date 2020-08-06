@@ -1,10 +1,12 @@
 System Suspend and Device Interrupts
+(系统挂起和设备中断)
 
 Copyright (C) 2014 Intel Corp.
 Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 
 
 Suspending and Resuming Device IRQs
+(挂起和恢复设备中断)
 -----------------------------------
 
 Device interrupt request lines (IRQs) are generally disabled during system

@@ -36,10 +36,13 @@ struct pt_regs;
  * @threads_active:	number of irqaction threads currently running
  * @wait_for_threads:	wait queue for sync_irq to wait for threaded handlers
  * @nr_actions:		number of installed actions on this descriptor
+ * 			(安装在该中断描述符中的action个数)
  * @no_suspend_depth:	number of irqactions on a irq descriptor with
  *			IRQF_NO_SUSPEND set
+ *			(安装在该中断描述符中的且设置了IRQF_NO_SUSPEND 标识位的irqactions 个数)
  * @force_resume_depth:	number of irqactions on a irq descriptor with
  *			IRQF_FORCE_RESUME set
+ *			(安装在该中断描述符中且设置了IRQF_FORCE_RESUME 的irqactions 个数)
  * @dir:		/proc/irq/ procfs entry
  * @name:		flow handler name for /proc/interrupts output
  */

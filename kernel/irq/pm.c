@@ -4,6 +4,7 @@
  * Copyright (C) 2009 Rafael J. Wysocki <rjw@sisk.pl>, Novell Inc.
  *
  * This file contains power management functions related to interrupts.
+ * (中断相关的电源管理功能)
  */
 
 #include <linux/irq.h>
@@ -14,6 +15,12 @@
 
 #include "internals.h"
 
+/*
+ * copied form irq_may_run():
+ * If the interrupt is an armed wakeup source, mark it pending
+ * and suspended, disable it and notify the pm core about the
+ * event.
+ */
 bool irq_pm_check_wakeup(struct irq_desc *desc)
 {
 	if (irqd_is_wakeup_armed(&desc->irq_data)) {
@@ -30,6 +37,7 @@ bool irq_pm_check_wakeup(struct irq_desc *desc)
 /*
  * Called from __setup_irq() with desc->lock held after @action has
  * been installed in the action chain.
+ * (安装了@action 之后，统计@action 的个数)
  */
 void irq_pm_install_action(struct irq_desc *desc, struct irqaction *action)
 {
@@ -38,6 +46,7 @@ void irq_pm_install_action(struct irq_desc *desc, struct irqaction *action)
 	if (action->flags & IRQF_FORCE_RESUME)
 		desc->force_resume_depth++;
 
+	//WARN_ON_ONCE(condition) 括号内表示的是条件
 	WARN_ON_ONCE(desc->force_resume_depth &&
 		     desc->force_resume_depth != desc->nr_actions);
 
@@ -54,6 +63,7 @@ void irq_pm_install_action(struct irq_desc *desc, struct irqaction *action)
 /*
  * Called from __free_irq() with desc->lock held after @action has
  * been removed from the action chain.
+ * (从__free_irq()中在删除了@action 之后调用)
  */
 void irq_pm_remove_action(struct irq_desc *desc, struct irqaction *action)
 {
@@ -101,6 +111,7 @@ static bool suspend_device_irq(struct irq_desc *desc)
 
 /**
  * suspend_device_irqs - disable all currently enabled interrupt lines
+ * 			(关闭所有当前使能的中断)
  *
  * During system-wide suspend or hibernation device drivers need to be
  * prevented from receiving interrupts and this function is provided
@@ -179,6 +190,7 @@ static void resume_irqs(bool want_early)
  * irq_pm_syscore_ops - enable interrupt lines early
  *
  * Enable all interrupt lines with %IRQF_EARLY_RESUME set.
+ * (使能所有设置了IRQF_EARLY_RESUME 的中断，提前唤醒设备)
  */
 static void irq_pm_syscore_resume(void)
 {
@@ -191,6 +203,10 @@ static struct syscore_ops irq_pm_syscore_ops = {
 
 static int __init irq_pm_init_ops(void)
 {
+	//TODO: 这玩意干啥的，第二次见了
+	//应该是注册了一个钩子函数，在设备启动或者唤醒的时候会被调用
+	//TODO: 设置了__init，在唤醒的时候重新加载么？需要用来唤醒设
+	//备的中断如何处理的？
 	register_syscore_ops(&irq_pm_syscore_ops);
 	return 0;
 }
@@ -199,10 +215,13 @@ device_initcall(irq_pm_init_ops);
 
 /**
  * resume_device_irqs - enable interrupt lines disabled by suspend_device_irqs()
+ * 			(使能被suspend_device_irqs() 关闭的中断)
  *
  * Enable all non-%IRQF_EARLY_RESUME interrupt lines previously
  * disabled by suspend_device_irqs() that have the IRQS_SUSPENDED flag
  * set as well as those with %IRQF_FORCE_RESUME.
+ * (non-%IRQF_EARLY_RESUME 中断，设置了IRQS_SUSPENDED或IRQF_FORCE_RESUME 的中断会
+ * 被唤醒)
  */
 void resume_device_irqs(void)
 {
