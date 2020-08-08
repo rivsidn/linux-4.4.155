@@ -80,6 +80,7 @@ void irq_pm_remove_action(struct irq_desc *desc, struct irqaction *action)
 
 static bool suspend_device_irq(struct irq_desc *desc)
 {
+	//TODO：irq_desc_is_chained() 怎么理解？
 	if (!desc->action || irq_desc_is_chained(desc) ||
 	    desc->no_suspend_depth)
 		return false;
@@ -116,15 +117,24 @@ static bool suspend_device_irq(struct irq_desc *desc)
  * During system-wide suspend or hibernation device drivers need to be
  * prevented from receiving interrupts and this function is provided
  * for this purpose.
+ * (在系统级的挂起或休眠时，设备驱动需要防止接受到中断，该函数就是提供
+ * 该功能)
  *
  * So we disable all interrupts and mark them IRQS_SUSPENDED except
  * for those which are unused, those which are marked as not
  * suspendable via an interrupt request with the flag IRQF_NO_SUSPEND
  * set and those which are marked as active wakeup sources.
+ * (所以我们关闭所有中断并给他们设置IRQS_SUSPENDED标识位，除了那些没
+ * 用到的中断和设置了IRQF_NO_SUSPEND 标识位的中断和那些被标识为唤醒
+ * 源的中断)
  *
  * The active wakeup sources are handled by the flow handler entry
  * code which checks for the IRQD_WAKEUP_ARMED flag, suspends the
  * interrupt and notifies the pm core about the wakeup.
+ * (唤醒源在flow handler代码中被处理，检查IRQD_WAKEUP_ARMED 标识位，
+ * 挂起中断并同志电源管理核心唤醒事件)
+ *
+ * (挂起的时候一起挂起，唤醒的时候分先后)
  */
 void suspend_device_irqs(void)
 {
@@ -135,6 +145,7 @@ void suspend_device_irqs(void)
 		unsigned long flags;
 		bool sync;
 
+		//TODO: 这里的continue怎么理解？
 		if (irq_settings_is_nested_thread(desc))
 			continue;
 		raw_spin_lock_irqsave(&desc->lock, flags);
@@ -220,7 +231,7 @@ device_initcall(irq_pm_init_ops);
  * Enable all non-%IRQF_EARLY_RESUME interrupt lines previously
  * disabled by suspend_device_irqs() that have the IRQS_SUSPENDED flag
  * set as well as those with %IRQF_FORCE_RESUME.
- * (non-%IRQF_EARLY_RESUME 中断，设置了IRQS_SUSPENDED或IRQF_FORCE_RESUME 的中断会
+ * (non-%IRQF_EARLY_RESUME 中断中，设置了IRQS_SUSPENDED或IRQF_FORCE_RESUME 的中断会
  * 被唤醒)
  */
 void resume_device_irqs(void)

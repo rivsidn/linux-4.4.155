@@ -5,8 +5,10 @@
 #include <linux/list.h>
 
 struct msi_msg {
+	/* 64位的msi消息地址 */
 	u32	address_lo;	/* low 32 bits of msi message address */
 	u32	address_hi;	/* high 32 bits of msi message address */
+	/* 16位的msi消息数据 */
 	u32	data;		/* 16 bits of msi message data */
 };
 
@@ -40,12 +42,14 @@ struct platform_msi_desc {
 
 /**
  * struct msi_desc - Descriptor structure for MSI based interrupts
- * 					 (MSI中断描述符结构体)
- * @list:	List head for management
- * @irq:	The base interrupt number
- * @nvec_used:	The number of vectors used
+ * 		(基于MSI的中断描述符结构体)
+ * @list:	List head for management(用于管理的链表头)
+ * @irq:	The base interrupt number(中断号起始位置)
+ * @nvec_used:	The number of vectors used(用到的中断向量个数)
  * @dev:	Pointer to the device which uses this descriptor
+ * 		(指向用该描述符的设备指针)
  * @msg:	The last set MSI message cached for reuse
+ * 		(最后设置的MSI消息缓存)
  *
  * @masked:	[PCI MSI/X] Mask bits
  * @is_msix:	[PCI MSI/X] True if MSI-X

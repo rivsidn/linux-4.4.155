@@ -8,6 +8,7 @@
  *
  * This file contains common code to support Message Signalled Interrupt for
  * PCI compatible and non PCI compatible devices.
+ * (支持MSI(Message Signalled Interrupt)的通用代码)
  */
 #include <linux/types.h>
 #include <linux/device.h>
