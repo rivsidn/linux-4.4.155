@@ -17,6 +17,8 @@ struct msi_desc;
  *
  * Architectures can provide their own implementation by not including
  * asm-generic/msi.h into their arch specific header file.
+ * (不同架构可以提供他们自己的实现，通过不包含 asm-generic/msi.h 文件到他
+ * 们自己的头文件中)
  */
 typedef struct msi_alloc_info {
 	struct msi_desc			*desc;

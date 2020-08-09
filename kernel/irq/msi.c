@@ -36,11 +36,13 @@ void free_msi_entry(struct msi_desc *entry)
 	kfree(entry);
 }
 
+//从 msi_desc 中获取到上次使用的 msi_msg
 void __get_cached_msi_msg(struct msi_desc *entry, struct msi_msg *msg)
 {
 	*msg = entry->msg;
 }
 
+//msi_desc 在 irq_common_data{} 中，irq_common_data{} 在 irq_desc{} 中
 void get_cached_msi_msg(unsigned int irq, struct msi_msg *msg)
 {
 	struct msi_desc *entry = irq_get_msi_desc(irq);
@@ -72,8 +74,10 @@ int msi_domain_set_affinity(struct irq_data *irq_data,
 	struct msi_msg msg;
 	int ret;
 
+	//TODO: 为何要设置 parent 的亲和性
 	ret = parent->chip->irq_set_affinity(parent, mask, force);
 	if (ret >= 0 && ret != IRQ_SET_MASK_OK_DONE) {
+		//BUG_ON(condition)
 		BUG_ON(irq_chip_compose_msi_msg(irq_data, &msg));
 		irq_chip_write_msi_msg(irq_data, &msg);
 	}
@@ -81,6 +85,7 @@ int msi_domain_set_affinity(struct irq_data *irq_data,
 	return ret;
 }
 
+//激活MSI
 static void msi_domain_activate(struct irq_domain *domain,
 				struct irq_data *irq_data)
 {
@@ -90,6 +95,7 @@ static void msi_domain_activate(struct irq_domain *domain,
 	irq_chip_write_msi_msg(irq_data, &msg);
 }
 
+//去激活MSI
 static void msi_domain_deactivate(struct irq_domain *domain,
 				  struct irq_data *irq_data)
 {
@@ -110,11 +116,13 @@ static int msi_domain_alloc(struct irq_domain *domain, unsigned int virq,
 	if (irq_find_mapping(domain, hwirq) > 0)
 		return -EEXIST;
 
+	//建立映射
 	ret = irq_domain_alloc_irqs_parent(domain, virq, nr_irqs, arg);
 	if (ret < 0)
 		return ret;
 
 	for (i = 0; i < nr_irqs; i++) {
+		//初始化
 		ret = ops->msi_init(domain, info, virq + i, hwirq + i, arg);
 		if (ret < 0) {
 			if (ops->msi_free) {
@@ -182,6 +190,8 @@ static int msi_domain_ops_init(struct irq_domain *domain,
 	irq_domain_set_hwirq_and_chip(domain, virq, hwirq, info->chip,
 				      info->chip_data);
 	if (info->handler && info->handler_name) {
+		//也就是说可以将 msi_domain_info 中的 handler 和 handler_name 
+		//设置给 virq
 		__irq_set_handler(virq, info->handler, 0, info->handler_name);
 		if (info->handler_data)
 			irq_set_handler_data(virq, info->handler_data);
@@ -204,6 +214,7 @@ static struct msi_domain_ops msi_domain_ops_default = {
 	.set_desc	= msi_domain_ops_set_desc,
 };
 
+//如果有的函数没有的，则用默认的ops
 static void msi_domain_update_dom_ops(struct msi_domain_info *info)
 {
 	struct msi_domain_ops *ops = info->ops;
@@ -255,6 +266,7 @@ struct irq_domain *msi_create_irq_domain(struct fwnode_handle *fwnode,
 
 /**
  * msi_domain_alloc_irqs - Allocate interrupts from a MSI interrupt domain
+ * 			(从MSI中断域申请中断)
  * @domain:	The domain to allocate from
  * @dev:	Pointer to device struct of the device for which the interrupts
  *		are allocated
@@ -313,6 +325,8 @@ int msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev,
 		 * This flag is set by the PCI layer as we need to activate
 		 * the MSI entries before the PCI layer enables MSI in the
 		 * card. Otherwise the card latches a random msi message.
+		 * (该标识位置由于PCI层设置，我们需要在PCI层使能MSI之前激活
+		 * 该MSI表项，不然硬件会发出乱的MSI消息)
 		 */
 		if (info->flags & MSI_FLAG_ACTIVATE_EARLY) {
 			struct irq_data *irq_data;
@@ -327,6 +341,7 @@ int msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev,
 
 /**
  * msi_domain_free_irqs - Free interrupts from a MSI interrupt @domain associated tp @dev
+ * 			(从MSI中断域中释放跟@dev相关的中断)
  * @domain:	The domain to managing the interrupts
  * @dev:	Pointer to device struct of the device for which the interrupts
  *		are free
@@ -340,6 +355,8 @@ void msi_domain_free_irqs(struct irq_domain *domain, struct device *dev)
 		 * We might have failed to allocate an MSI early
 		 * enough that there is no IRQ associated to this
 		 * entry. If that's the case, don't do anything.
+		 * (我们只前申请中断时可能失败了，导致此处没有IRQ跟
+		 * 这个表项相对应。如果是这种情况，什么都不需要做)
 		 */
 		if (desc->irq) {
 			irq_domain_free_irqs(desc->irq, desc->nvec_used);

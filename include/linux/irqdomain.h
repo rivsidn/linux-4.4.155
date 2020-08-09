@@ -128,6 +128,7 @@ struct irq_domain_chip_generic;
  * @ops: pointer to irq_domain methods
  * @host_data: private data pointer for use by owner.  Not touched by irq_domain
  *             core code.
+ *             (用户定义的私有数据，irq_domain核心代码不会动)
  * @flags: host per irq_domain flags
  *
  * Optional elements

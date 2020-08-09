@@ -1073,12 +1073,15 @@ int irq_chip_set_wake_parent(struct irq_data *data, unsigned int on)
 
 /**
  * irq_chip_compose_msi_msg - Compose msi message for a irq chip
+ * 			(为中断芯片编写msi消息)
  * @data:	Pointer to interrupt specific data
  * @msg:	Pointer to the MSI message
  *
  * For hierarchical domains we find the first chip in the hierarchy
  * which implements the irq_compose_msi_msg callback. For non
  * hierarchical we use the top level chip.
+ * (对于实现了层级域的我们寻找第一个实现了 irq_compose_msi_msg 回调
+ * 函数的域，对于没实现的我们选取最开始的那个)
  */
 int irq_chip_compose_msi_msg(struct irq_data *data, struct msi_msg *msg)
 {

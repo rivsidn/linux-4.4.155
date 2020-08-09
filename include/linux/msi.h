@@ -59,9 +59,12 @@ struct platform_msi_desc {
  * @is_64:	[PCI MSI/X] Address size: 0=32bit 1=64bit
  * @entry_nr:	[PCI MSI/X] Entry which is described by this descriptor
  * @default_irq:[PCI MSI/X] The default pre-assigned non-MSI irq
- * @mask_pos:	[PCI MSI]   Mask register position
- * @mask_base:	[PCI MSI-X] Mask register base address
+ * @mask_pos:	[PCI MSI]   Mask register position(掩码寄存器位置)
+ * @mask_base:	[PCI MSI-X] Mask register base address(掩码寄存器基地址)
  * @platform:	[platform]  Platform device specific msi descriptor data
+ *
+ * (不仅是PCI设备支持MSI，其他设备同样也能够支持MSI，所以在此处定义结构
+ * 体的时候通过一个union将PCI设备和非PCI设备分开)
  */
 struct msi_desc {
 	/* Shared device/bus type independent data */
@@ -72,7 +75,7 @@ struct msi_desc {
 	struct msi_msg			msg;
 
 	union {
-		/* PCI MSI/X specific data */
+		/* PCI MSI/X specific data (PCI相关数据) */
 		struct {
 			u32 masked;
 			struct {
@@ -96,6 +99,7 @@ struct msi_desc {
 		 * proper name spaces for this. The PCI part is
 		 * anonymous for now as it would require an immediate
 		 * tree wide cleanup.
+		 * (非PCI变量需要在此处添加结构体)
 		 */
 		struct platform_msi_desc platform;
 	};
@@ -237,13 +241,16 @@ struct msi_domain_ops {
 /**
  * struct msi_domain_info - MSI interrupt domain data
  * @flags:		Flags to decribe features and capabilities
- * @ops:		The callback data structure
+ * @ops:		The callback data structure(回调函数结构体)
  * @chip:		Optional: associated interrupt chip
  * @chip_data:		Optional: associated interrupt chip data
  * @handler:		Optional: associated interrupt flow handler
  * @handler_data:	Optional: associated interrupt flow handler data
  * @handler_name:	Optional: associated interrupt flow handler name
  * @data:		Optional: domain specific data
+ *
+ * 位于 irq_domain {.host_data} 中，是用户自己定义的私有数据，irq_domain
+ * 核心代码不会动该部分的内容
  */
 struct msi_domain_info {
 	u32			flags;

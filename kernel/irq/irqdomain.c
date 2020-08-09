@@ -691,7 +691,7 @@ EXPORT_SYMBOL_GPL(irq_dispose_mapping);
 
 /**
  * irq_find_mapping() - Find a linux irq from an hw irq number.
- * 						通过linux中断号寻找硬件中断号
+ * 			(通过linux中断号寻找硬件中断号)
  * @domain: domain owning this hardware interrupt
  * @hwirq: hardware irq number in that domain space
  */
@@ -1078,7 +1078,7 @@ struct irq_data *irq_domain_get_irq_data(struct irq_domain *domain,
 
 /**
  * irq_domain_set_hwirq_and_chip - Set hwirq and irqchip of @virq at @domain
- * 								   为domain中的@virq设置hwirq 和irqchip
+ * 				   (为domain中的@virq设置hwirq 和irqchip)
  * @domain:	Interrupt domain to match
  * @virq:	IRQ number
  * @hwirq:	The hwirq number
