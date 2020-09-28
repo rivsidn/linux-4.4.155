@@ -1615,6 +1615,12 @@ union security_list_options {
 #endif /* CONFIG_AUDIT */
 };
 
+/*
+ * 定义了一系列的链表头
+ * 这一系列的链表头就是钩子函数注册的hook点,
+ * 钩子函数通过LSM_HOOK_INIT() 定义，
+ * 通过security_add_hooks 添加到hook点中。
+ */
 struct security_hook_heads {
 	struct list_head binder_set_context_mgr;
 	struct list_head binder_transaction;

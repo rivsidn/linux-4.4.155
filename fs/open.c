@@ -722,6 +722,7 @@ static int do_dentry_open(struct file *f,
 		goto cleanup_all;
 	}
 
+	//调用LSM框架关于open的回调函数
 	error = security_file_open(f, cred);
 	if (error)
 		goto cleanup_all;
