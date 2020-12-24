@@ -80,6 +80,7 @@ static void flow_entry_kill(struct flow_cache_entry *fle,
 	kmem_cache_free(flow_cachep, fle);
 }
 
+//具体的垃圾回收工作
 static void flow_cache_gc_task(struct work_struct *work)
 {
 	struct list_head gc_list;
@@ -105,6 +106,8 @@ static void flow_cache_queue_garbage(struct flow_cache_percpu *fcp,
 		spin_lock_bh(&xfrm->flow_cache_gc_lock);
 		list_splice_tail(gc_list, &xfrm->flow_cache_gc_list);
 		spin_unlock_bh(&xfrm->flow_cache_gc_lock);
+		//调度垃圾回收工作队列
+		//TODO: 内存没释放的核心原因就是flow_cache_gc_work得不到调度
 		schedule_work(&xfrm->flow_cache_gc_work);
 	}
 }
@@ -129,6 +132,7 @@ static void __flow_cache_shrink(struct flow_cache *fc,
 			    flow_entry_valid(fle, xfrm)) {
 				saved++;
 			} else {
+				//将要删除的放到gc_list中
 				deleted++;
 				hlist_del(&fle->u.hlist);
 				list_add_tail(&fle->u.gc_list, &gc_list);
@@ -139,6 +143,7 @@ static void __flow_cache_shrink(struct flow_cache *fc,
 	flow_cache_queue_garbage(fcp, deleted, &gc_list, xfrm);
 }
 
+//flow_cache_lookup() 中调用
 static void flow_cache_shrink(struct flow_cache *fc,
 			      struct flow_cache_percpu *fcp)
 {
@@ -147,14 +152,18 @@ static void flow_cache_shrink(struct flow_cache *fc,
 	__flow_cache_shrink(fc, fcp, shrink_to);
 }
 
+//flow_cache_lookup() 中调用
 static void flow_new_hash_rnd(struct flow_cache *fc,
 			      struct flow_cache_percpu *fcp)
 {
 	get_random_bytes(&fcp->hash_rnd, sizeof(u32));
 	fcp->hash_rnd_recalc = 0;
+
+	//压缩到0, 等同于全部清空
 	__flow_cache_shrink(fc, fcp, 0);
 }
 
+//生成hash值
 static u32 flow_hash_code(struct flow_cache *fc,
 			  struct flow_cache_percpu *fcp,
 			  const struct flowi *key,
@@ -205,6 +214,7 @@ flow_cache_lookup(struct net *net, const struct flowi *key, u16 family, u8 dir,
 	fle = NULL;
 	flo = NULL;
 
+	//是否支持，不支持则跳转到nocache执行
 	keysize = flow_key_size(family);
 	if (!keysize)
 		goto nocache;
@@ -214,6 +224,7 @@ flow_cache_lookup(struct net *net, const struct flowi *key, u16 family, u8 dir,
 	if (!fcp->hash_table)
 		goto nocache;
 
+	//如果需要更新hash因子，更新并清空hash表
 	if (fcp->hash_rnd_recalc)
 		flow_new_hash_rnd(fc, fcp);
 
@@ -229,6 +240,8 @@ flow_cache_lookup(struct net *net, const struct flowi *key, u16 family, u8 dir,
 	}
 
 	if (unlikely(!fle)) {
+		//会在flow_cache_shrink()此处调用垃圾回收工作队列，
+		//但是由于cpu占用率过高，一直调用不到。
 		if (fcp->hash_count > fc->high_watermark)
 			flow_cache_shrink(fc, fcp);
 
@@ -255,6 +268,7 @@ flow_cache_lookup(struct net *net, const struct flowi *key, u16 family, u8 dir,
 	        fle->object = NULL;
 	}
 
+//无cache的处理流程
 nocache:
 	flo = NULL;
 	if (fle) {
@@ -303,6 +317,7 @@ static void flow_cache_flush_tasklet(unsigned long data)
 		}
 	}
 
+	//刷新就是删除所有的entry
 	flow_cache_queue_garbage(fcp, deleted, &gc_list, xfrm);
 
 	if (atomic_dec_and_test(&info->cpuleft))
@@ -334,6 +349,7 @@ static void flow_cache_flush_per_cpu(void *data)
 
 	tasklet = &this_cpu_ptr(info->cache->percpu)->flush_tasklet;
 	tasklet->data = (unsigned long)info;
+	//调度tasklet
 	tasklet_schedule(tasklet);
 }
 
@@ -368,6 +384,7 @@ void flow_cache_flush(struct net *net)
 		flow_cache_flush_tasklet((unsigned long)&info);
 	local_bh_enable();
 
+	//事件同步，等待所有CPU结束刷新
 	wait_for_completion(&info.completion);
 
 done:
@@ -385,11 +402,13 @@ static void flow_cache_flush_task(struct work_struct *work)
 	flow_cache_flush(net);
 }
 
+//延迟刷新
 void flow_cache_flush_deferred(struct net *net)
 {
 	schedule_work(&net->xfrm.flow_cache_flush_work);
 }
 
+//设置 flow_cache_percpu 结构体
 static int flow_cache_cpu_prepare(struct flow_cache *fc, int cpu)
 {
 	struct flow_cache_percpu *fcp = per_cpu_ptr(fc->percpu, cpu);
@@ -432,6 +451,7 @@ static int flow_cache_cpu(struct notifier_block *nfb,
 	return NOTIFY_OK;
 }
 
+//初始化
 int flow_cache_init(struct net *net)
 {
 	int i;
@@ -441,11 +461,15 @@ int flow_cache_init(struct net *net)
 		flow_cachep = kmem_cache_create("flow_cache",
 						sizeof(struct flow_cache_entry),
 						0, SLAB_PANIC, NULL);
+	//垃圾回收
+	//为什么此处要用工作队列？
+	//工作队列的好处，异步操作，提高当前报文处理的效率
 	spin_lock_init(&net->xfrm.flow_cache_gc_lock);
 	INIT_LIST_HEAD(&net->xfrm.flow_cache_gc_list);
 	INIT_WORK(&net->xfrm.flow_cache_gc_work, flow_cache_gc_task);
-	INIT_WORK(&net->xfrm.flow_cache_flush_work, flow_cache_flush_task);
+	//缓存刷新
 	mutex_init(&net->xfrm.flow_flush_sem);
+	INIT_WORK(&net->xfrm.flow_cache_flush_work, flow_cache_flush_task);
 
 	fc->hash_shift = 10;
 	fc->low_watermark = 2 * flow_cache_hash_size(fc);
@@ -468,6 +492,7 @@ int flow_cache_init(struct net *net)
 
 	cpu_notifier_register_done();
 
+	//设置定时器
 	setup_timer(&fc->rnd_timer, flow_cache_new_hashrnd,
 		    (unsigned long) fc);
 	fc->rnd_timer.expires = jiffies + FLOW_HASH_RND_PERIOD;
@@ -491,6 +516,7 @@ err:
 }
 EXPORT_SYMBOL(flow_cache_init);
 
+//退出
 void flow_cache_fini(struct net *net)
 {
 	int i;
