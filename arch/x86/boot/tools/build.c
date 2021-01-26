@@ -14,6 +14,9 @@
  * It does some checking that all files are of the correct type, and writes
  * the result to the specified destination, removing headers and padding to
  * the right amount. It also writes some system data to stdout.
+ *
+ * 该程序通过三个文件构造disk-image.
+ * 该程序并不检查文件类型是否正确，仅仅是去掉文件头部写到镜像中.
  */
 
 /*
