@@ -8,6 +8,7 @@
 #include <linux/slab.h>
 #include <net/ip.h>
 
+//在PRE 和OUTPUT 两个链上
 #define RAW_VALID_HOOKS ((1 << NF_INET_PRE_ROUTING) | (1 << NF_INET_LOCAL_OUT))
 
 static const struct xt_table packet_raw = {
@@ -15,6 +16,7 @@ static const struct xt_table packet_raw = {
 	.valid_hooks =  RAW_VALID_HOOKS,
 	.me = THIS_MODULE,
 	.af = NFPROTO_IPV4,
+	//优先级在链接跟踪之前
 	.priority = NF_IP_PRI_RAW,
 };
 

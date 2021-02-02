@@ -136,6 +136,7 @@ __nf_conntrack_helper_find(const char *name, u16 l3num, u8 protonum)
 	struct nf_conntrack_helper *h;
 	unsigned int i;
 
+	//遍历hash表查找
 	for (i = 0; i < nf_ct_helper_hsize; i++) {
 		hlist_for_each_entry_rcu(h, &nf_ct_helper_hash[i], hnode) {
 			if (!strcmp(h->name, name) &&
@@ -183,6 +184,12 @@ nf_ct_helper_ext_add(struct nf_conn *ct,
 }
 EXPORT_SYMBOL_GPL(nf_ct_helper_ext_add);
 
+/*
+ * tmpl 是文件 xt_CT.c 中添加的链接跟踪模板
+ *
+ * 该函数主要是给链接跟踪设置一个HELPER 拓展，并设置对应的helper.
+ * helper 通过 nf_conntrack_helper_register() 注册.
+ */
 int __nf_ct_try_assign_helper(struct nf_conn *ct, struct nf_conn *tmpl,
 			      gfp_t flags)
 {
@@ -370,6 +377,7 @@ int nf_conntrack_helper_register(struct nf_conntrack_helper *me)
 	BUG_ON(strlen(me->name) > NF_CT_HELPER_NAME_LEN - 1);
 
 	mutex_lock(&nf_ct_helper_mutex);
+	//检查是否已经存在，已经存在则退出
 	hlist_for_each_entry(cur, &nf_ct_helper_hash[h], hnode) {
 		if (strncmp(cur->name, me->name, NF_CT_HELPER_NAME_LEN) == 0 &&
 		    cur->tuple.src.l3num == me->tuple.src.l3num &&
@@ -378,6 +386,7 @@ int nf_conntrack_helper_register(struct nf_conntrack_helper *me)
 			goto out;
 		}
 	}
+	//没存在则添加到对应的hash表中，增加个数
 	hlist_add_head_rcu(&me->hnode, &nf_ct_helper_hash[h]);
 	nf_ct_helper_count++;
 out:

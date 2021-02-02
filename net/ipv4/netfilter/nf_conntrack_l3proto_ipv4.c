@@ -92,7 +92,6 @@ static int ipv4_get_l4proto(const struct sk_buff *skb, unsigned int nhoff,
 	return NF_ACCEPT;
 }
 
-//此处的helper从之前的
 static unsigned int ipv4_helper(void *priv,
 				struct sk_buff *skb,
 				const struct nf_hook_state *state)
@@ -116,6 +115,10 @@ static unsigned int ipv4_helper(void *priv,
 	if (!helper)
 		return NF_ACCEPT;
 
+	/*
+	 * 调用help函数，helper通过调用nf_conntrack_helper_register() 中注册，
+	 * help 位于nf_conntrack_helper 结构体中.
+	 */
 	return helper->help(skb, skb_network_offset(skb) + ip_hdrlen(skb),
 			    ct, ctinfo);
 }
@@ -166,8 +169,12 @@ static unsigned int ipv4_conntrack_local(void *priv,
 	return nf_conntrack_in(state->net, PF_INET, state->hook, skb);
 }
 
-/* Connection tracking may drop packets, but never alters them, so
-   make it the first hook. */
+/* 
+ * Connection tracking may drop packets, but never alters them, so
+ * make it the first hook. 
+ *
+ * 链接跟踪可能会丢弃报文，但不会修改报文，所以将它放在第一个挂载点.
+ */
 static struct nf_hook_ops ipv4_conntrack_ops[] __read_mostly = {
 	{
 		.hook		= ipv4_conntrack_in,

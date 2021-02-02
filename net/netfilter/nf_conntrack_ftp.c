@@ -38,6 +38,7 @@ static char *ftp_buffer;
 
 static DEFINE_SPINLOCK(nf_ftp_lock);
 
+/* 模块加载时可以定义ftp端口号，最多定义8个 */
 #define MAX_PORTS 8
 static u_int16_t ports[MAX_PORTS];
 static unsigned int ports_c;
@@ -552,7 +553,7 @@ out_update_nl:
 	 * adjusted by NAT code. */
 	if (ends_in_nl)
 		update_nl_seq(ct, seq, ct_ftp_info, dir, skb);
- out:
+out:
 	spin_unlock_bh(&nf_ftp_lock);
 	return ret;
 }
@@ -561,7 +562,8 @@ static int nf_ct_ftp_from_nlattr(struct nlattr *attr, struct nf_conn *ct)
 {
 	struct nf_ct_ftp_master *ftp = nfct_help_data(ct);
 
-	/* This conntrack has been injected from user-space, always pick up
+	/* 
+	 * This conntrack has been injected from user-space, always pick up
 	 * sequence tracking. Otherwise, the first FTP command after the
 	 * failover breaks.
 	 */
@@ -607,9 +609,12 @@ static int __init nf_conntrack_ftp_init(void)
 	if (ports_c == 0)
 		ports[ports_c++] = FTP_PORT;
 
-	/* FIXME should be configurable whether IPv4 and IPv6 FTP connections
-		 are tracked or not - YK */
+	/*
+	 * FIXME should be configurable whether IPv4 and IPv6 FTP connections
+	 *	 are tracked or not - YK 
+	 */
 	for (i = 0; i < ports_c; i++) {
+		//参数设置
 		ftp[i][0].tuple.src.l3num = PF_INET;
 		ftp[i][1].tuple.src.l3num = PF_INET6;
 		for (j = 0; j < 2; j++) {
@@ -628,6 +633,8 @@ static int __init nf_conntrack_ftp_init(void)
 			pr_debug("nf_ct_ftp: registering helper for pf: %d "
 				 "port: %d\n",
 				 ftp[i][j].tuple.src.l3num, ports[i]);
+
+			/* 注册，如果注册失败则调用finish()，返回 */
 			ret = nf_conntrack_helper_register(&ftp[i][j]);
 			if (ret) {
 				printk(KERN_ERR "nf_ct_ftp: failed to register"

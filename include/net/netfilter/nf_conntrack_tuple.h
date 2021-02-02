@@ -25,20 +25,27 @@
 #define NF_CT_TUPLE_L3SIZE	ARRAY_SIZE(((union nf_inet_addr *)NULL)->all)
 
 /* The manipulable part of the tuple. */
+/* 元组中可操作的部分 */
 struct nf_conntrack_man {
+	/* 三层协议地址 */
 	union nf_inet_addr u3;
+	/* 四层协议端口号 */
 	union nf_conntrack_man_proto u;
-	/* Layer 3 protocol */
+	/* 三层协议号(IP,IPv6) */
 	u_int16_t l3num;
 };
 
 /* This contains the information to distinguish a connection. */
+/* 该结构体包含用于区分链接的信息 */
 struct nf_conntrack_tuple {
 	struct nf_conntrack_man src;
 
 	/* These are the parts of the tuple which are fixed. */
+	/* 元组中这部分信息是固定的 */
 	struct {
+		/* 三层协议地址 */
 		union nf_inet_addr u3;
+		/* 四层协议端口号 */
 		union {
 			/* Add other protocols here. */
 			__be16 all;
@@ -64,6 +71,7 @@ struct nf_conntrack_tuple {
 		} u;
 
 		/* The protocol. */
+		/* 四层协议号 */
 		u_int8_t protonum;
 
 		/* The direction (for tuplehash) */

@@ -87,6 +87,7 @@ xt_ct_set_helper(struct nf_conn *ct, const char *helper_name,
 		return -ENOENT;
 	}
 
+	//查找helper函数，如果找不到的话尝试添加模块
 	helper = nf_conntrack_helper_try_module_get(helper_name, par->family,
 						    proto);
 	if (helper == NULL) {
@@ -375,6 +376,17 @@ static void xt_ct_tg_destroy_v1(const struct xt_tgdtor_param *par)
 	xt_ct_tg_destroy(par, par->targinfo);
 }
 
+/*
+ * 规则下发/生效流程:
+ * 1. 规则下发时候先会调用check 下发规则是否正确.
+ * 2. 报文到来, 匹配之后会调用到具体的targ下发规则是否正确.
+ *
+ * 下发规则的时候会首先调用nf_ct_tmpl_alloc() 创建一個模板ct，當報文
+ * 匹配之后就将该ct 赋给skb.
+ * 
+ * 该target在raw表上，raw表优先级在链接跟踪之前，所以在链接跟踪处理
+ * 之前会先经过该target处理.
+ */
 static struct xt_target xt_ct_tg_reg[] __read_mostly = {
 	{
 		.name		= "CT",
@@ -434,6 +446,7 @@ static int notrack_chk(const struct xt_tgchk_param *par)
 	return 0;
 }
 
+/* 不做链接跟踪 */
 static struct xt_target notrack_tg_reg __read_mostly = {
 	.name		= "NOTRACK",
 	.revision	= 0,

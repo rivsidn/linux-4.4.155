@@ -23,10 +23,10 @@ enum nf_ct_helper_flags {
 #define NF_CT_HELPER_NAME_LEN	16
 
 struct nf_conntrack_helper {
-	struct hlist_node hnode;	/* Internal use. */
+	struct hlist_node hnode;		/* Internal use. */
 
-	char name[NF_CT_HELPER_NAME_LEN]; /* name of the module */
-	struct module *me;		/* pointer to self */
+	char name[NF_CT_HELPER_NAME_LEN]; 	/* name of the module */
+	struct module *me;			/* pointer to self */
 	const struct nf_conntrack_expect_policy *expect_policy;
 
 	/* length of internal data, ie. sizeof(struct nf_ct_*_master) */
@@ -35,8 +35,7 @@ struct nf_conntrack_helper {
 	/* Tuple of things we will help (compared against server response) */
 	struct nf_conntrack_tuple tuple;
 
-	/* Function to call when data passes; return verdict, or -1 to
-           invalidate. */
+	/* Function to call when data passes; return verdict, or -1 to invalidate. */
 	int (*help)(struct sk_buff *skb,
 		    unsigned int protoff,
 		    struct nf_conn *ct,

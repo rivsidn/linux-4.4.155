@@ -910,8 +910,13 @@ void nf_conntrack_free(struct nf_conn *ct)
 EXPORT_SYMBOL_GPL(nf_conntrack_free);
 
 
-/* Allocate a new conntrack: we return -ENOMEM if classification
-   failed due to stress.  Otherwise it really is unclassifiable. */
+/* 
+ * Allocate a new conntrack: we return -ENOMEM if classification
+ * failed due to stress.  Otherwise it really is unclassifiable.
+ *
+ * 申请一个新的链接跟踪：内存不足的时候返回 -ENOMEM，否则就是该流
+ * 无法分类.
+ */
 static struct nf_conntrack_tuple_hash *
 init_conntrack(struct net *net, struct nf_conn *tmpl,
 	       const struct nf_conntrack_tuple *tuple,

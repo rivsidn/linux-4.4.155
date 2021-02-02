@@ -173,6 +173,7 @@ EXPORT_SYMBOL(in4_pton);
 
 /**
  * in6_pton - convert an IPv6 address from literal to binary representation
+ *          - 将字符串的IP地址转换成二进制形式
  * @src: the start of the IPv6 address string
  * @srclen: the length of the string, -1 means strlen(src)
  * @dst: the binary (u8[16] array) representation of the IPv6 address
