@@ -185,6 +185,7 @@ static ssize_t group_fwd_mask_store(struct device *d,
 
 	return len;
 }
+//读写，分别对应group_fwd_mask_show()、group_fwd_mask_store()函数
 static DEVICE_ATTR_RW(group_fwd_mask);
 
 static ssize_t priority_show(struct device *d, struct device_attribute *attr,
