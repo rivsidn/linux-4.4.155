@@ -1374,11 +1374,14 @@ EXPORT_SYMBOL(skb_put);
  *	start. If this would exceed the total buffer headroom the kernel will
  *	panic. A pointer to the first byte of the extra data is returned.
  */
+/*
+ * 	添加数据到buffer头部
+ */
 unsigned char *skb_push(struct sk_buff *skb, unsigned int len)
 {
-	skb->data -= len;
-	skb->len  += len;
-	if (unlikely(skb->data<skb->head))
+	skb->data -= len;			//指向buffer头部指针，此时插入数据，指针位置需要前移
+	skb->len  += len;			//数据长度增加
+	if (unlikely(skb->data<skb->head))	//越界，触发异常
 		skb_under_panic(skb, len, __builtin_return_address(0));
 	return skb->data;
 }

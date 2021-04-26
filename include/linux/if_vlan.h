@@ -129,6 +129,7 @@ struct netpoll;
 
 /**
  *	struct vlan_dev_priv - VLAN private device data
+ *                           - VLAN 设备私有数据
  *	@nr_ingress_mappings: number of ingress priority mappings
  *	@ingress_priority_map: ingress priority mappings
  *	@nr_egress_mappings: number of egress priority mappings
@@ -291,6 +292,9 @@ static inline bool vlan_hw_offload_capable(netdev_features_t features,
  * Returns error if skb_cow_head failes.
  *
  * Does not change skb->protocol so this function can be used during receive.
+ */
+/*
+ * 将vlan tag 插入到skb 中
  */
 static inline int __vlan_insert_tag(struct sk_buff *skb,
 				    __be16 vlan_proto, u16 vlan_tci)

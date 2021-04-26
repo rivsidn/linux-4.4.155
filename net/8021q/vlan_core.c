@@ -5,6 +5,9 @@
 #include <linux/export.h>
 #include "vlan.h"
 
+/*
+ * __netif_receive_skb_core()中被调用，添加vlan tag
+ */
 bool vlan_do_receive(struct sk_buff **skbp)
 {
 	struct sk_buff *skb = *skbp;
@@ -23,9 +26,14 @@ bool vlan_do_receive(struct sk_buff **skbp)
 
 	skb->dev = vlan_dev;
 	if (unlikely(skb->pkt_type == PACKET_OTHERHOST)) {
-		/* Our lower layer thinks this is not local, let's make sure.
+		/*
+		 * Our lower layer thinks this is not local, let's make sure.
 		 * This allows the VLAN to have a different MAC than the
-		 * underlying device, and still route correctly. */
+		 * underlying device, and still route correctly.
+		 *
+		 * 底层认为该报文不是到本机的，需要我们确认一下。
+		 * 该部分允许vlan设备跟mac与底层设备不同，并仍然能够正确路由。
+		 */
 		if (ether_addr_equal_64bits(eth_hdr(skb)->h_dest, vlan_dev->dev_addr))
 			skb->pkt_type = PACKET_HOST;
 	}
@@ -54,6 +62,7 @@ bool vlan_do_receive(struct sk_buff **skbp)
 
 	rx_stats = this_cpu_ptr(vlan_dev_priv(vlan_dev)->vlan_pcpu_stats);
 
+	//更新统计信息
 	u64_stats_update_begin(&rx_stats->syncp);
 	rx_stats->rx_packets++;
 	rx_stats->rx_bytes += skb->len;
@@ -64,6 +73,7 @@ bool vlan_do_receive(struct sk_buff **skbp)
 	return true;
 }
 
+//TODO: next...
 /* Must be invoked with rcu_read_lock. */
 struct net_device *__vlan_find_dev_deep_rcu(struct net_device *dev,
 					__be16 vlan_proto, u16 vlan_id)
