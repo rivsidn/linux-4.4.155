@@ -75,7 +75,6 @@ static int vlan_group_prealloc_vid(struct vlan_group *vg,
 	return 0;
 }
 
-//TODO: next...
 void unregister_vlan_dev(struct net_device *dev, struct list_head *head)
 {
 	struct vlan_dev_priv *vlan = vlan_dev_priv(dev);
@@ -298,13 +297,13 @@ static void vlan_sync_address(struct net_device *dev,
 	 * the new address */
 	if (!ether_addr_equal(vlandev->dev_addr, vlan->real_dev_addr) &&
 	    ether_addr_equal(vlandev->dev_addr, dev->dev_addr))
-		dev_uc_del(dev, vlandev->dev_addr);
+		dev_uc_del(dev, vlandev->dev_addr);		//删除单播地址
 
 	/* vlan address was equal to the old address and is different from
 	 * the new address */
 	if (ether_addr_equal(vlandev->dev_addr, vlan->real_dev_addr) &&
 	    !ether_addr_equal(vlandev->dev_addr, dev->dev_addr))
-		dev_uc_add(dev, vlandev->dev_addr);
+		dev_uc_add(dev, vlandev->dev_addr);		//添加单播地址
 
 out:
 	ether_addr_copy(vlan->real_dev_addr, dev->dev_addr);
@@ -349,6 +348,7 @@ static int __vlan_device_event(struct net_device *dev, unsigned long event)
 	return err;
 }
 
+//响应事件
 static int vlan_device_event(struct notifier_block *unused, unsigned long event,
 			     void *ptr)
 {

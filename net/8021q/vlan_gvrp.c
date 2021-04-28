@@ -7,6 +7,10 @@
  *	modify it under the terms of the GNU General Public License
  *	version 2 as published by the Free Software Foundation.
  */
+/*
+ *	此处的gvrp 不会只能作为客户端，不会解析收到的PDU报文，在自己
+ *	设备上添加vlan
+ */
 #include <linux/types.h>
 #include <linux/if_vlan.h>
 #include <net/garp.h>
