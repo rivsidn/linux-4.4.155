@@ -18,8 +18,8 @@
 
 /* Passed in vlan_ioctl_args structure to determine behaviour. */
 enum vlan_ioctl_cmds {
-	ADD_VLAN_CMD,
-	DEL_VLAN_CMD,
+	ADD_VLAN_CMD,				//添加vlan
+	DEL_VLAN_CMD,				//删除vlan
 	SET_VLAN_INGRESS_PRIORITY_CMD,
 	SET_VLAN_EGRESS_PRIORITY_CMD,
 	GET_VLAN_INGRESS_PRIORITY_CMD,

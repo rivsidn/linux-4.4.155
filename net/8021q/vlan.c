@@ -75,6 +75,7 @@ static int vlan_group_prealloc_vid(struct vlan_group *vg,
 	return 0;
 }
 
+//TODO: next...
 void unregister_vlan_dev(struct net_device *dev, struct list_head *head)
 {
 	struct vlan_dev_priv *vlan = vlan_dev_priv(dev);
@@ -122,11 +123,13 @@ int vlan_check_real_dev(struct net_device *real_dev,
 {
 	const char *name = real_dev->name;
 
+	//设备是否支持vlan
 	if (real_dev->features & NETIF_F_VLAN_CHALLENGED) {
 		pr_info("VLANs not supported on %s\n", name);
 		return -EOPNOTSUPP;
 	}
 
+	//vlan是否已经在该设备上注册
 	if (vlan_find_dev(real_dev, protocol, vlan_id) != NULL)
 		return -EEXIST;
 

@@ -139,7 +139,7 @@ struct netpoll;
  *	@flags: device flags
  *	@real_dev: underlying netdevice
  *	@real_dev_addr: address of underlying netdevice
- *	@dent: proc dir entry
+ *	@dent: proc dir entry(proc文件目录)
  *	@vlan_pcpu_stats: ptr to percpu rx stats
  */
 struct vlan_dev_priv {

@@ -18,6 +18,7 @@ enum vlan_protos {
 	VLAN_PROTO_NUM,
 };
 
+/* 协议添加的vid 和手动添加的vid 集合[NS] */
 struct vlan_group {
 	unsigned int		nr_vlan_devs;
 	struct hlist_node	hlist;	/* linked list */
@@ -25,12 +26,15 @@ struct vlan_group {
 					       [VLAN_GROUP_ARRAY_SPLIT_PARTS];
 };
 
+/* 每一个net_device{} 设备都有一个指向vlan_info{} 结构体的指针 */
 struct vlan_info {
 	struct net_device	*real_dev; /* The ethernet(like) device
 					    * the vlan is attached to.
+					    * 每一个vlan会绑定一个真实的
+					    * 物理设备.
 					    */
 	struct vlan_group	grp;
-	struct list_head	vid_list;
+	struct list_head	vid_list;  /* vlan_vid_info{} 结构体链表 */
 	unsigned int		nr_vids;
 	struct rcu_head		rcu;
 };
@@ -66,6 +70,7 @@ static inline struct net_device *vlan_group_get_device(struct vlan_group *vg,
 	return __vlan_group_get_device(vg, vlan_proto_idx(vlan_proto), vlan_id);
 }
 
+/* 此处的dev 不是真实的dev，是vlan 对应的net_device */
 static inline void vlan_group_set_device(struct vlan_group *vg,
 					 __be16 vlan_proto, u16 vlan_id,
 					 struct net_device *dev)
@@ -169,6 +174,7 @@ struct vlan_net {
 	/* /proc/net/vlan/config */
 	struct proc_dir_entry *proc_vlan_conf;
 	/* Determines interface naming scheme. */
+	/* 接口命名策略 */
 	unsigned short name_type;
 };
 

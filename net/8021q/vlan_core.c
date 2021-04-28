@@ -73,7 +73,6 @@ bool vlan_do_receive(struct sk_buff **skbp)
 	return true;
 }
 
-//TODO: next...
 /* Must be invoked with rcu_read_lock. */
 struct net_device *__vlan_find_dev_deep_rcu(struct net_device *dev,
 					__be16 vlan_proto, u16 vlan_id)
@@ -88,6 +87,7 @@ struct net_device *__vlan_find_dev_deep_rcu(struct net_device *dev,
 		 * Lower devices of master uppers (bonding, team) do not have
 		 * grp assigned to themselves. Grp is assigned to upper device
 		 * instead.
+		 * 主设备的底层设备没有跟grp绑定，master跟grp绑定的.
 		 */
 		struct net_device *upper_dev;
 
@@ -101,6 +101,7 @@ struct net_device *__vlan_find_dev_deep_rcu(struct net_device *dev,
 }
 EXPORT_SYMBOL(__vlan_find_dev_deep_rcu);
 
+/* 通过vlan设备获取真实的物理设备 */
 struct net_device *vlan_dev_real_dev(const struct net_device *dev)
 {
 	struct net_device *ret = vlan_dev_priv(dev)->real_dev;
@@ -128,6 +129,7 @@ EXPORT_SYMBOL(vlan_dev_vlan_proto);
  * vlan info and vid list
  */
 
+/* 释放vlan_group{} 内存 */
 static void vlan_group_free(struct vlan_group *grp)
 {
 	int i, j;
@@ -136,7 +138,7 @@ static void vlan_group_free(struct vlan_group *grp)
 		for (j = 0; j < VLAN_GROUP_ARRAY_SPLIT_PARTS; j++)
 			kfree(grp->vlan_devices_arrays[i][j]);
 }
-
+/* 释放vlan_info{} 内存 */
 static void vlan_info_free(struct vlan_info *vlan_info)
 {
 	vlan_group_free(&vlan_info->grp);
@@ -168,6 +170,7 @@ struct vlan_vid_info {
 	int refcount;
 };
 
+/* 是否具有硬件过滤能力 */
 static bool vlan_hw_filter_capable(const struct net_device *dev,
 				     const struct vlan_vid_info *vid_info)
 {
@@ -186,6 +189,7 @@ static struct vlan_vid_info *vlan_vid_info_get(struct vlan_info *vlan_info,
 	struct vlan_vid_info *vid_info;
 
 	list_for_each_entry(vid_info, &vlan_info->vid_list, list) {
+		/* 通过协议号，vid 过滤 vlan_vid_info{} */
 		if (vid_info->proto == proto && vid_info->vid == vid)
 			return vid_info;
 	}
@@ -218,6 +222,7 @@ static int __vlan_vid_add(struct vlan_info *vlan_info, __be16 proto, u16 vid,
 		return -ENOMEM;
 
 	if (vlan_hw_filter_capable(dev, vid_info)) {
+		//如果具备硬件过滤能力需要操作硬件
 		if (netif_device_present(dev))
 			err = ops->ndo_vlan_rx_add_vid(dev, proto, vid);
 		else
@@ -233,6 +238,11 @@ static int __vlan_vid_add(struct vlan_info *vlan_info, __be16 proto, u16 vid,
 	return 0;
 }
 
+/*
+ * 给设备添加vlan.
+ * 1. 添加vlan_info{}
+ * 2. 在vlan_info{} 中添加vid_info{}
+ */
 int vlan_vid_add(struct net_device *dev, __be16 proto, u16 vid)
 {
 	struct vlan_info *vlan_info;
@@ -279,6 +289,7 @@ static void __vlan_vid_del(struct vlan_info *vlan_info,
 	int err;
 
 	if (vlan_hw_filter_capable(dev, vid_info)) {
+		//如果设备具有硬件过滤能力，需要操作硬件
 		if (netif_device_present(dev))
 			err = ops->ndo_vlan_rx_kill_vid(dev, proto, vid);
 		else
@@ -318,6 +329,7 @@ void vlan_vid_del(struct net_device *dev, __be16 proto, u16 vid)
 }
 EXPORT_SYMBOL(vlan_vid_del);
 
+/* 遍历by_dev 设备中所有的vid，添加到dev 中 */
 int vlan_vids_add_by_dev(struct net_device *dev,
 			 const struct net_device *by_dev)
 {
@@ -349,6 +361,7 @@ unwind:
 }
 EXPORT_SYMBOL(vlan_vids_add_by_dev);
 
+/* 遍历by_dev 中所有的vid，将其从dev 中删除 */
 void vlan_vids_del_by_dev(struct net_device *dev,
 			  const struct net_device *by_dev)
 {
