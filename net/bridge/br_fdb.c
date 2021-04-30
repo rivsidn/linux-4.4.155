@@ -848,6 +848,7 @@ static int __br_fdb_add(struct ndmsg *ndm, struct net_bridge_port *p,
 }
 
 /* Add new permanent fdb entry with RTM_NEWNEIGH */
+/* 添加永久的fdb表 */
 int br_fdb_add(struct ndmsg *ndm, struct nlattr *tb[],
 	       struct net_device *dev,
 	       const unsigned char *addr, u16 vid, u16 nlh_flags)
