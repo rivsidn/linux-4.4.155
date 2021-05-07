@@ -442,8 +442,10 @@ bool br_allowed_ingress(const struct net_bridge *br,
 			struct net_bridge_vlan_group *vg, struct sk_buff *skb,
 			u16 *vid)
 {
-	/* If VLAN filtering is disabled on the bridge, all packets are
+	/*
+	 * If VLAN filtering is disabled on the bridge, all packets are
 	 * permitted.
+	 * 如果VLAN 过滤在该桥上是禁止的，允许所有包通过.
 	 */
 	if (!br->vlan_enabled) {
 		BR_INPUT_SKB_CB(skb)->vlan_filtered = false;
@@ -889,11 +891,13 @@ err_rhtbl:
 	goto out;
 }
 
+/* 往桥中添加端口的时候会调用该函数 */
 int nbp_vlan_init(struct net_bridge_port *p)
 {
 	struct net_bridge_vlan_group *vg;
 	int ret = -ENOMEM;
 
+	//申请内存
 	vg = kzalloc(sizeof(struct net_bridge_vlan_group), GFP_KERNEL);
 	if (!vg)
 		goto out;
@@ -933,12 +937,14 @@ int nbp_vlan_add(struct net_bridge_port *port, u16 vid, u16 flags)
 
 	ASSERT_RTNL();
 
+	/* 找到了添加标识位 */
 	vlan = br_vlan_find(nbp_vlan_group(port), vid);
 	if (vlan) {
 		__vlan_add_flags(vlan, flags);
 		return 0;
 	}
 
+	/* 没找到则申请内存，添加 */
 	vlan = kzalloc(sizeof(*vlan), GFP_KERNEL);
 	if (!vlan)
 		return -ENOMEM;

@@ -96,6 +96,9 @@ struct bridge_mcast_querier {
  * the port's rhashtable. The union entries should be interpreted depending on
  * the entry flags that are set.
  */
+/*
+ * 单独的vlan 表项
+ */
 struct net_bridge_vlan {
 	struct rhash_head		vnode;
 	u16				vid;
@@ -126,6 +129,9 @@ struct net_bridge_vlan {
  *            are just for global context but not for filtering, i.e. they have
  *            the master flag set but not the brentry flag. If you have to check
  *            if there're "real" entries in the bridge please test @num_vlans
+ */
+/*
+ * 这个结构体是做什么用的？
  */
 struct net_bridge_vlan_group {
 	struct rhashtable		vlan_hash;
@@ -184,8 +190,8 @@ struct net_bridge_mdb_htable
 
 struct net_bridge_port
 {
-	struct net_bridge		*br;
-	struct net_device		*dev;
+	struct net_bridge		*br;	//桥设备
+	struct net_device		*dev;	//物理设备
 	struct list_head		list;
 
 	/* STP */
@@ -340,7 +346,7 @@ struct net_bridge
 #ifdef CONFIG_BRIDGE_VLAN_FILTERING
 	struct net_bridge_vlan_group	__rcu *vlgrp;
 	u8				vlan_enabled;
-	__be16				vlan_proto;
+	__be16				vlan_proto;		//协议号
 	u16				default_pvid;
 #endif
 };
