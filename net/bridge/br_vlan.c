@@ -361,6 +361,7 @@ out:
 }
 
 /* Called under RCU */
+/* 报文的入方向，给报文添加了tag */
 static bool __allowed_ingress(struct net_bridge_vlan_group *vg, __be16 proto,
 			      struct sk_buff *skb, u16 *vid)
 {
@@ -747,6 +748,7 @@ static void br_vlan_disable_default_pvid(struct net_bridge *br)
 	br->default_pvid = 0;
 }
 
+/* 设置默认的pvid */
 int __br_vlan_set_default_pvid(struct net_bridge *br, u16 pvid)
 {
 	const struct net_bridge_vlan *pvent;
@@ -859,6 +861,7 @@ unlock:
 	return err;
 }
 
+/* 创建桥初始化 */
 int br_vlan_init(struct net_bridge *br)
 {
 	struct net_bridge_vlan_group *vg;
@@ -891,13 +894,15 @@ err_rhtbl:
 	goto out;
 }
 
-/* 往桥中添加端口的时候会调用该函数 */
+/* 桥口vlan初始化 */
 int nbp_vlan_init(struct net_bridge_port *p)
 {
+	/*
+	 * 桥和桥中的端口都对应 net_bridege_vlan_group{} 结构体
+	 */
 	struct net_bridge_vlan_group *vg;
 	int ret = -ENOMEM;
 
-	//申请内存
 	vg = kzalloc(sizeof(struct net_bridge_vlan_group), GFP_KERNEL);
 	if (!vg)
 		goto out;
@@ -970,7 +975,9 @@ int nbp_vlan_delete(struct net_bridge_port *port, u16 vid)
 	v = br_vlan_find(nbp_vlan_group(port), vid);
 	if (!v)
 		return -ENOENT;
+	//刷新本地fdb 表
 	br_fdb_find_delete_local(port->br, port, port->dev->dev_addr, vid);
+	//刷新端口fdb 表
 	br_fdb_delete_by_port(port->br, port, vid, 0);
 
 	return __vlan_del(v);

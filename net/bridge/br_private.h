@@ -130,9 +130,6 @@ struct net_bridge_vlan {
  *            the master flag set but not the brentry flag. If you have to check
  *            if there're "real" entries in the bridge please test @num_vlans
  */
-/*
- * 这个结构体是做什么用的？
- */
 struct net_bridge_vlan_group {
 	struct rhashtable		vlan_hash;
 	struct list_head		vlan_list;

@@ -204,6 +204,7 @@ static void br_flood(struct net_bridge *br, struct sk_buff *skb,
 
 	prev = NULL;
 
+	/* 这段代码怎么理解？ */
 	list_for_each_entry_rcu(p, &br->port_list, list) {
 		/* Do not flood unicast traffic to ports that turn it off */
 		if (unicast && !(p->flags & BR_FLOOD))
