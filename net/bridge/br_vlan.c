@@ -361,7 +361,9 @@ out:
 }
 
 /* Called under RCU */
-/* 报文的入方向，给报文添加了tag */
+/*
+ * 报文的入方向，给报文添加了tag；vlan 检查，是否可以接收该报文
+ */
 static bool __allowed_ingress(struct net_bridge_vlan_group *vg, __be16 proto,
 			      struct sk_buff *skb, u16 *vid)
 {
@@ -380,6 +382,7 @@ static bool __allowed_ingress(struct net_bridge_vlan_group *vg, __be16 proto,
 			return false;
 	}
 
+	//vid 是获取的来自skb 的vlan
 	if (!br_vlan_get_tag(skb, vid)) {
 		/* Tagged frame */
 		if (skb->vlan_proto != proto) {
@@ -439,6 +442,7 @@ drop:
 	return false;
 }
 
+/* vlan 过滤，是否允许报文进入 */
 bool br_allowed_ingress(const struct net_bridge *br,
 			struct net_bridge_vlan_group *vg, struct sk_buff *skb,
 			u16 *vid)

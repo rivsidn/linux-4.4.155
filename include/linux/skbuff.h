@@ -1820,6 +1820,7 @@ static inline unsigned char *__skb_push(struct sk_buff *skb, unsigned int len)
 unsigned char *skb_pull(struct sk_buff *skb, unsigned int len);
 static inline unsigned char *__skb_pull(struct sk_buff *skb, unsigned int len)
 {
+	//长度减少，数据后移
 	skb->len -= len;
 	BUG_ON(skb->len < skb->data_len);
 	return skb->data += len;
