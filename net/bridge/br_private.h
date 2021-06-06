@@ -131,10 +131,10 @@ struct net_bridge_vlan {
  *            if there're "real" entries in the bridge please test @num_vlans
  */
 struct net_bridge_vlan_group {
-	struct rhashtable		vlan_hash;
-	struct list_head		vlan_list;
-	u16				num_vlans;
-	u16				pvid;
+	struct rhashtable		vlan_hash;	//vlan hash 表
+	struct list_head		vlan_list;	//vlan 链表
+	u16				num_vlans;	//vlan 个数
+	u16				pvid;		//不带vlan tag 报文的默认vlan
 };
 
 struct net_bridge_fdb_entry
@@ -393,12 +393,14 @@ static inline int br_is_root_bridge(const struct net_bridge *br)
 }
 
 /* check if a VLAN entry is global */
+/* 检查vlan 表项是不是全局的 */
 static inline bool br_vlan_is_master(const struct net_bridge_vlan *v)
 {
 	return v->flags & BRIDGE_VLAN_INFO_MASTER;
 }
 
 /* check if a VLAN entry is used by the bridge */
+/* 检查vlan 表项是不是只被桥使用 */
 static inline bool br_vlan_is_brentry(const struct net_bridge_vlan *v)
 {
 	return v->flags & BRIDGE_VLAN_INFO_BRENTRY;

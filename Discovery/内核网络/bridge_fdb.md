@@ -27,20 +27,6 @@
 
 
 
-### 配置接口
-
-```bash
-Usage: bridge vlan { add | del } vid VLAN_ID dev DEV [ tunnel_info id TUNNEL_ID ]
-                                                     [ pvid ] [ untagged ]
-                                                     [ self ] [ master ]
-       bridge vlan { show } [ dev DEV ] [ vid VLAN_ID ]
-       bridge vlan { tunnelshow } [ dev DEV ] [ vid VLAN_ID ]
-```
-
-
-
-
-
 
 
 
