@@ -232,6 +232,9 @@ static void destroy_nbp_rcu(struct rcu_head *head)
  *
  * Protected from multiple admin operations by RTNL mutex
  */
+/*
+ * 删除 net bridge port
+ */
 static void del_nbp(struct net_bridge_port *p)
 {
 	struct net_bridge *br = p->br;

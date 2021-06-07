@@ -104,8 +104,8 @@ struct net_bridge_vlan {
 	u16				vid;
 	u16				flags;
 	union {
-		struct net_bridge	*br;
-		struct net_bridge_port	*port;
+		struct net_bridge	*br;		//桥
+		struct net_bridge_port	*port;		//端口
 	};
 	union {
 		atomic_t		refcnt;

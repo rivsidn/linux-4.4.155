@@ -89,6 +89,7 @@ static int __vlan_vid_add(struct net_device *dev, struct net_bridge *br,
 	return err;
 }
 
+/* 添加 net_bridge_vlan{} 到 net_bridge_vlan_group{}->vlan_list 中 */
 static void __vlan_add_list(struct net_bridge_vlan *v)
 {
 	struct net_bridge_vlan_group *vg;
@@ -155,7 +156,7 @@ static struct net_bridge_vlan *br_vlan_get_master(struct net_bridge *br, u16 vid
 		if (WARN_ON(!masterv))
 			return NULL;
 	}
-	atomic_inc(&masterv->refcnt);
+	atomic_inc(&masterv->refcnt);	//增加引用计数
 
 	return masterv;
 }
@@ -169,6 +170,7 @@ static void br_vlan_put_master(struct net_bridge_vlan *masterv)
 
 	vg = br_vlan_group(masterv->br);
 	if (atomic_dec_and_test(&masterv->refcnt)) {
+		//引用计数为0，彻底删除 masterv
 		rhashtable_remove_fast(&vg->vlan_hash,
 				       &masterv->vnode, br_vlan_rht_params);
 		__vlan_del_list(masterv);
@@ -186,6 +188,9 @@ static void br_vlan_put_master(struct net_bridge_vlan *masterv)
  *    global entry is used for global per-vlan features, but not for filtering
  * 4. same as 3 but with both master and brentry flags set so the entry
  *    will be used for filtering in both the port and the bridge
+ */
+/*
+ * TODO: next...
  */
 static int __vlan_add(struct net_bridge_vlan *v, u16 flags)
 {
@@ -983,6 +988,7 @@ int nbp_vlan_delete(struct net_bridge_port *port, u16 vid)
 	return __vlan_del(v);
 }
 
+/* 删除桥口的时候vlan刷新 */
 void nbp_vlan_flush(struct net_bridge_port *port)
 {
 	struct net_bridge_vlan_group *vg;
