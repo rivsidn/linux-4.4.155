@@ -265,6 +265,10 @@ void br_fdb_change_mac_address(struct net_bridge *br, const u8 *newaddr)
 	spin_lock_bh(&br->hash_lock);
 
 	/* If old entry was unassociated with any port, then delete it. */
+	/*
+	 * br_delete_local() 中，如果删除桥口的mac地址会跟桥mac一致，会将
+	 * f->dst 设置为空.
+	 */
 	f = __br_fdb_get(br, br->dev->dev_addr, 0);
 	if (f && f->is_local && !f->dst)
 		fdb_delete_local(br, NULL, f);
