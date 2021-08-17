@@ -2584,9 +2584,10 @@ extern int netdev_flow_limit_table_len;
 
 /*
  * Incoming packets are placed on per-cpu queues
+ * 进来的报文放在一个每CPU队列上
  */
 struct softnet_data {
-	struct list_head	poll_list;
+	struct list_head	poll_list;		//napi->poll_list链表
 	struct sk_buff_head	process_queue;
 
 	/* stats */

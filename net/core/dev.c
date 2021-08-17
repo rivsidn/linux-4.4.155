@@ -3264,6 +3264,7 @@ int weight_p __read_mostly = 64;            /* old backlog weight */
 static inline void ____napi_schedule(struct softnet_data *sd,
 				     struct napi_struct *napi)
 {
+	/* 添加napi_struct{} 结构体到sd->poll_list 中，触发软中断 */
 	list_add_tail(&napi->poll_list, &sd->poll_list);
 	__raise_softirq_irqoff(NET_RX_SOFTIRQ);
 }
@@ -4701,6 +4702,7 @@ EXPORT_SYMBOL(__napi_schedule);
  * @n: entry to schedule
  *
  * Variant of __napi_schedule() assuming hard irqs are masked
+ * __napi_schedule()函数变种，假定此时硬件中断已经被屏蔽
  */
 void __napi_schedule_irqoff(struct napi_struct *n)
 {
@@ -4930,10 +4932,12 @@ static void net_rx_action(struct softirq_action *h)
 	struct softnet_data *sd = this_cpu_ptr(&softnet_data);
 	unsigned long time_limit = jiffies + 2;
 	int budget = netdev_budget;
+	/* 初始化两个链表 */
 	LIST_HEAD(list);
 	LIST_HEAD(repoll);
 
 	local_irq_disable();
+	/* 将sd->poll_list 中的内容添加到list 中，重新初始化sd->poll_list */
 	list_splice_init(&sd->poll_list, &list);
 	local_irq_enable();
 
@@ -4946,6 +4950,7 @@ static void net_rx_action(struct softirq_action *h)
 			break;
 		}
 
+		/* 从list 中取出napi结构体 */
 		n = list_first_entry(&list, struct napi_struct, poll_list);
 		budget -= napi_poll(n, &repoll);
 
@@ -4962,9 +4967,14 @@ static void net_rx_action(struct softirq_action *h)
 
 	local_irq_disable();
 
+	/*
+	 * 经过下边这样操作之后，sd->poll_list 中内容顺序为：
+	 * 未处理:新添加:未处理完
+	 */
 	list_splice_tail_init(&sd->poll_list, &list);
 	list_splice_tail(&repoll, &list);
 	list_splice(&list, &sd->poll_list);
+	/* 如果不为空，重新出发软中断 */
 	if (!list_empty(&sd->poll_list))
 		__raise_softirq_irqoff(NET_RX_SOFTIRQ);
 
@@ -7507,6 +7517,7 @@ out:
 }
 EXPORT_SYMBOL_GPL(dev_change_net_namespace);
 
+/* CPU热插拔相关，暂时不管 */
 static int dev_cpu_callback(struct notifier_block *nfb,
 			    unsigned long action,
 			    void *ocpu)

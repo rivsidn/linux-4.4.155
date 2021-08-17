@@ -315,6 +315,7 @@ static inline void list_splice_tail(struct list_head *list,
  * @head: the place to add it in the first list.
  *
  * The list at @list is reinitialised
+ * 将list 中内容添加到head 头部，并重新初始化list
  */
 static inline void list_splice_init(struct list_head *list,
 				    struct list_head *head)
@@ -332,6 +333,7 @@ static inline void list_splice_init(struct list_head *list,
  *
  * Each of the lists is a queue.
  * The list at @list is reinitialised
+ * 将list 中内容添加到head 尾部，并重新初始化list
  */
 static inline void list_splice_tail_init(struct list_head *list,
 					 struct list_head *head)

@@ -973,6 +973,10 @@ static int igb_request_msix(struct igb_adapter *adapter)
 		else
 			sprintf(q_vector->name, "%s-unused", netdev->name);
 
+		/*
+		 * 中断申请，中断触发之后调用igb_msix_ring函数，调用napi_schedul()，
+		 * 触发软中断，处理报文.
+		 */
 		err = request_irq(adapter->msix_entries[vector].vector,
 				  igb_msix_ring, 0, q_vector->name,
 				  q_vector);
@@ -6399,6 +6403,7 @@ static int igb_poll(struct napi_struct *napi, int budget)
 
 	/* If not enough Rx work done, exit the polling mode */
 	napi_complete_done(napi, work_done);
+	/* 重新使能中断，也就是说，没有完全处理之前，中断一直是关闭状态 */
 	igb_ring_irq_enable(q_vector);
 
 	return 0;

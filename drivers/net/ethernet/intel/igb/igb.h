@@ -269,6 +269,7 @@ struct igb_ring {
 	};
 } ____cacheline_internodealigned_in_smp;
 
+/* 对应一个中断向量 */
 struct igb_q_vector {
 	struct igb_adapter *adapter;	/* backlink */
 	int cpu;			/* CPU for DCA */
