@@ -80,6 +80,7 @@ s32 igb_write_i2c_byte(struct e1000_hw *hw, u8 byte_offset, u8 dev_addr,
 #define E1000_IMIREXT_CTRL_BP     0x00080000  /* Bypass check of ctrl bits */
 
 /* Receive Descriptor - Advanced */
+/* 高级接收描述符 */
 union e1000_adv_rx_desc {
 	struct {
 		__le64 pkt_addr;             /* Packet buffer address */

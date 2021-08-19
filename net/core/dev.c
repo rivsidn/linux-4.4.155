@@ -4415,6 +4415,7 @@ static gro_result_t napi_skb_finish(gro_result_t ret, struct sk_buff *skb)
 {
 	switch (ret) {
 	case GRO_NORMAL:
+		/* 协议栈入口函数 */
 		if (netif_receive_skb_internal(skb))
 			ret = GRO_DROP;
 		break;
@@ -4931,6 +4932,7 @@ static void net_rx_action(struct softirq_action *h)
 {
 	struct softnet_data *sd = this_cpu_ptr(&softnet_data);
 	unsigned long time_limit = jiffies + 2;
+	/* 此处也有预算限制 */
 	int budget = netdev_budget;
 	/* 初始化两个链表 */
 	LIST_HEAD(list);

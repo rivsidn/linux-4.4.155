@@ -201,9 +201,9 @@ struct igb_tx_buffer {
 };
 
 struct igb_rx_buffer {
-	dma_addr_t dma;
-	struct page *page;
-	unsigned int page_offset;
+	dma_addr_t dma;			//dma 地址
+	struct page *page;		//页面
+	unsigned int page_offset;	//页面偏移量
 };
 
 struct igb_tx_queue_stats {
@@ -245,12 +245,13 @@ struct igb_ring {
 	unsigned int  size;		/* length of desc. ring in bytes */
 
 	u16 count;			/* number of desc. in the ring */
+					/* 环中的描述符个数*/
 	u8 queue_index;			/* logical index of the ring*/
 	u8 reg_idx;			/* physical index of the ring */
 
 	/* everything past this point are written often */
-	u16 next_to_clean;
-	u16 next_to_use;
+	u16 next_to_clean;		/* 占用，待处理 */
+	u16 next_to_use;		/* 空闲，待使用 */
 	u16 next_to_alloc;
 
 	union {
@@ -313,6 +314,11 @@ static inline __le32 igb_test_staterr(union e1000_adv_rx_desc *rx_desc,
 }
 
 /* igb_desc_unused - calculate if we have unused descriptors */
+/*
+ * 统计我们是否有空闲的描述符，此时是一个环，
+ * next_to_clean 是下一个要处理的，非空闲的描述符，
+ * next_to_use 是当前空闲的，下一个可用的描述符。
+ */
 static inline int igb_desc_unused(struct igb_ring *ring)
 {
 	if (ring->next_to_clean > ring->next_to_use)

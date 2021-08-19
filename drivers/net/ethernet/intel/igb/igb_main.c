@@ -6394,6 +6394,7 @@ static int igb_poll(struct napi_struct *napi, int budget)
 		int cleaned = igb_clean_rx_irq(q_vector, budget);
 
 		work_done += cleaned;
+		/* cleaned 小于 budget 时，已经完全处理完 */
 		clean_complete &= (cleaned < budget);
 	}
 
@@ -6934,10 +6935,12 @@ static int igb_clean_rx_irq(struct igb_q_vector *q_vector, const int budget)
 	unsigned int total_bytes = 0, total_packets = 0;
 	u16 cleaned_count = igb_desc_unused(rx_ring);
 
+	/* 该次处理的报文总数小于本次预算 */
 	while (likely(total_packets < budget)) {
 		union e1000_adv_rx_desc *rx_desc;
 
 		/* return some buffers to hardware, one at a time is too slow */
+		/* 给硬件些内存，一次一个性能太慢了 */
 		if (cleaned_count >= IGB_RX_BUFFER_WRITE) {
 			igb_alloc_rx_buffers(rx_ring, cleaned_count);
 			cleaned_count = 0;
@@ -6977,8 +6980,10 @@ static int igb_clean_rx_irq(struct igb_q_vector *q_vector, const int budget)
 		total_bytes += skb->len;
 
 		/* populate checksum, timestamp, VLAN, and protocol */
+		/* 填充校验和，时间戳，vlan和协议 */
 		igb_process_skb_fields(rx_ring, rx_desc, skb);
 
+		/* 报文接收入口函数 */
 		napi_gro_receive(&q_vector->napi, skb);
 
 		/* reset skb pointer */
@@ -6991,6 +6996,7 @@ static int igb_clean_rx_irq(struct igb_q_vector *q_vector, const int budget)
 	/* place incomplete frames back on ring for completion */
 	rx_ring->skb = skb;
 
+	/* 更新统计数据 */
 	u64_stats_update_begin(&rx_ring->rx_syncp);
 	rx_ring->rx_stats.packets += total_packets;
 	rx_ring->rx_stats.bytes += total_bytes;
@@ -7034,6 +7040,7 @@ static bool igb_alloc_mapped_page(struct igb_ring *rx_ring,
 		return false;
 	}
 
+	/* 申请缓存内存 */
 	bi->dma = dma;
 	bi->page = page;
 	bi->page_offset = 0;
@@ -7055,6 +7062,7 @@ void igb_alloc_rx_buffers(struct igb_ring *rx_ring, u16 cleaned_count)
 	if (!cleaned_count)
 		return;
 
+	/* 描述符和接收缓存在ring中通过下标寻找，为一一对应关系 */
 	rx_desc = IGB_RX_DESC(rx_ring, i);
 	bi = &rx_ring->rx_buffer_info[i];
 	i -= rx_ring->count;
