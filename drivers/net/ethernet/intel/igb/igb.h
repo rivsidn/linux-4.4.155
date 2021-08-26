@@ -186,6 +186,8 @@ enum igb_tx_flags {
 
 /* wrapper around a pointer to a socket buffer,
  * so a DMA handle can be stored along with the buffer
+ *
+ * skb 的封装，封装之后DMA 可以跟buffer 放到一起
  */
 struct igb_tx_buffer {
 	union e1000_adv_tx_desc *next_to_watch;

@@ -6501,7 +6501,7 @@ static bool igb_clean_tx_irq(struct igb_q_vector *q_vector)
 		/* issue prefetch for next Tx descriptor */
 		prefetch(tx_desc);
 
-		/* update budget accounting */
+		/* update budget accounting(更新预算) */
 		budget--;
 	} while (likely(budget));
 

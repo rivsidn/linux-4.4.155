@@ -2265,6 +2265,7 @@ int netif_get_num_default_rss_queues(void)
 }
 EXPORT_SYMBOL(netif_get_num_default_rss_queues);
 
+/* 添加Qdisc 到发送队列，触发发送软中断 */
 static inline void __netif_reschedule(struct Qdisc *q)
 {
 	struct softnet_data *sd;
@@ -3662,6 +3663,7 @@ static void net_tx_action(struct softirq_action *h)
 {
 	struct softnet_data *sd = this_cpu_ptr(&softnet_data);
 
+	/* 释放已经发送报文的内存 */
 	if (sd->completion_queue) {
 		struct sk_buff *clist;
 
@@ -7912,6 +7914,10 @@ static int __init net_dev_init(void)
 	if (register_pernet_device(&default_device_ops))
 		goto out;
 
+	/*
+	 * 发送优先级比较高，相对比较容易理解，需要先发送腾出内存
+	 * 而后才能用于接收.
+	 */
 	open_softirq(NET_TX_SOFTIRQ, net_tx_action);
 	open_softirq(NET_RX_SOFTIRQ, net_rx_action);
 

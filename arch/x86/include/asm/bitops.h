@@ -385,6 +385,7 @@ static inline unsigned long __fls(unsigned long word)
 #ifdef __KERNEL__
 /**
  * ffs - find first set bit in word
+ *       word 中查找地一个已设置的标识位
  * @x: the word to search
  *
  * This is defined the same way as the libc and compiler builtin ffs

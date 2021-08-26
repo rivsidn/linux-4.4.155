@@ -142,6 +142,9 @@ static inline int handle_dev_cpu_collision(struct sk_buff *skb,
  * required. Holding the __QDISC___STATE_RUNNING bit guarantees that
  * only one CPU can execute this function.
  *
+ * 发送可能的多个skb，并且处理返回状态.
+ * 设置 __QDISC___STATE_RUNNING 状态确保只能有一个CPU可以执行该函数.
+ *
  * Returns to the caller:
  *				0  - queue is empty or throttled.
  *				>0 - queue is not empty.
