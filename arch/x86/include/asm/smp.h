@@ -168,6 +168,7 @@ extern unsigned disabled_cpus;
  * from the initial startup. We map APIC_BASE very early in page_setup(),
  * so this is correct in the x86 case.
  */
+/* 获取当前CPU号 */
 #define raw_smp_processor_id() (this_cpu_read(cpu_number))
 extern int safe_smp_processor_id(void);
 
