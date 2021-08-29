@@ -17,31 +17,43 @@ Ftrace is an internal tracer designed to help out developers and
 designers of systems to find what is going on inside the kernel.
 It can be used for debugging or analyzing latencies and
 performance issues that take place outside of user-space.
+Ftrace是内部跟踪工具，用于帮助开发者、系统设计师发现内核正在做什么。
+Ftrace可以用于帮助用户调试发生在用户态之外的延迟、性能问题。
 
 Although ftrace is typically considered the function tracer, it
 is really a frame work of several assorted tracing utilities.
 There's latency tracing to examine what occurs between interrupts
 disabled and enabled, as well as for preemption and from a time
 a task is woken to the task is actually scheduled in.
+虽然ftrace 是经常被认为是函数跟踪工具，实际上它是多种调试工具依赖的一个框架。
+他们可以用于跟踪中断从关闭到开启时间延迟，和进程从唤醒到真正被调度的时间。
 
 One of the most common uses of ftrace is the event tracing.
 Through out the kernel is hundreds of static event points that
 can be enabled via the debugfs file system to see what is
 going on in certain parts of the kernel.
+其中ftrace 最通用的使用是事件跟踪，内核中存在好多静态调试事件点可以通过debugfs 文件
+系统查看内核的特定部分。
 
 
 Implementation Details
+实现细节
 ----------------------
 
 See ftrace-design.txt for details for arch porters and such.
+查看ftrace-design.txt.
 
 
 The File System
+文件系统
 ---------------
 
 Ftrace uses the debugfs file system to hold the control files as
 well as the files to display output.
+Ftrace中通过debugfs 文件系统保存控制文件和输出文件.
 
+当debugfs文件系统在内核中配置了之后，就会通过，会创建一个/sys/kernel/debug 文件。
+挂载文件的几种方式如下:
 When debugfs is configured into the kernel (which selecting any ftrace
 option will do) the directory /sys/kernel/debug will be created. To mount
 this directory, you can add to your /etc/fstab file:
@@ -49,11 +61,13 @@ this directory, you can add to your /etc/fstab file:
  debugfs       /sys/kernel/debug          debugfs defaults        0       0
 
 Or you can mount it at run time with:
+运行时挂载:
 
  mount -t debugfs nodev /sys/kernel/debug
 
 For quicker access to that directory you may want to make a soft link to
 it:
+为了快速访问可以创建一个软链接:
 
  ln -s /sys/kernel/debug /debug
 
@@ -62,20 +76,25 @@ within the debugfs. The rest of the document will assume that you are in
 the ftrace directory (cd /sys/kernel/debug/tracing) and will only concentrate
 on the files within that directory and not distract from the content with
 the extended "/sys/kernel/debug/tracing" path name.
+任意选中的ftrace 选项会在debugfs中创建一个名为tracing的目录。
+文档中的剩余部分假定在目录"/sys/kernel/debug/tracing"中。
 
 That's it! (assuming that you have ftrace configured into your kernel)
 
 After mounting debugfs, you can see a directory called
 "tracing".  This directory contains the control and output files
 of ftrace. Here is a list of some of the key files:
+"tracing" 目录下有ftrace 用于控制和输出的文件。
 
 
  Note: all time values are in microseconds.
+ 注意: 所有的时间都以毫秒为单位.
 
   current_tracer:
 
 	This is used to set or display the current tracer
 	that is configured.
+	用于显示配置的当前的跟踪器.
 
   available_tracers:
 
@@ -83,6 +102,7 @@ of ftrace. Here is a list of some of the key files:
 	have been compiled into the kernel. The
 	tracers listed here can be configured by
 	echoing their name into current_tracer.
+	保存着不同的跟踪器，可以通过将名字echo 到current_tracer 中使能.
 
   tracing_on:
 
@@ -91,11 +111,13 @@ of ftrace. Here is a list of some of the key files:
 	the tracer or 1 to enable it. Note, this only disables
 	writing to the ring buffer, the tracing overhead may
 	still be occurring.
+	用于设置和显示是否写到trace 环缓冲队列中.
 
   trace:
 
 	This file holds the output of the trace in a human
 	readable format (described below).
+	该文件用于显示输出.
 
   trace_pipe:
 
@@ -110,6 +132,7 @@ of ftrace. Here is a list of some of the key files:
 	"trace" file is static, and if the tracer is not
 	adding more data, it will display the same
 	information every time it is read.
+	用于显示输出，在该文件已经读取的内容就获取不到了.
 
   trace_options:
 
