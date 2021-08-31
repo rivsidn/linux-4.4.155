@@ -1,6 +1,8 @@
 /*
  *  inode.c - part of tracefs, a pseudo file system for activating tracing
  *
+ *  一个伪文件系统，用于激活跟踪功能
+ *
  * Based on debugfs by: Greg Kroah-Hartman <greg@kroah.com>
  *
  *  Copyright (C) 2014 Red Hat Inc, author: Steven Rostedt <srostedt@redhat.com>
