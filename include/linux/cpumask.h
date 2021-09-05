@@ -285,7 +285,7 @@ static inline void cpumask_clear_cpu(int cpu, struct cpumask *dstp)
 
 /**
  * cpumask_test_cpu - test for a cpu in a cpumask
- * 					- 检查cpu号是不是在一个cpumask内
+ * 		    - 检查cpu号是不是在一个cpumask内
  * @cpu: cpu number (< nr_cpu_ids)
  * @cpumask: the cpumask pointer
  *

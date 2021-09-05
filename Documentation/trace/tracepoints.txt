@@ -138,6 +138,7 @@ the tracepoint being enabled and the check being seen.
 The advantage of using the trace_<tracepoint>_enabled() is that it uses
 the static_key of the tracepoint to allow the if statement to be implemented
 with jump labels and avoid conditional branches.
+使用`trace_<tracepoint>_enabled()` 的好处是避免了分支预测.
 
 Note: The convenience macro TRACE_EVENT provides an alternative way to
       define tracepoints. Check http://lwn.net/Articles/379903,

@@ -239,4 +239,5 @@ DEFINE_EVENT(net_dev_rx_verbose_template, netif_rx_ni_entry,
 #endif /* _TRACE_NET_H */
 
 /* This part must be outside protection */
+/* 这部分是什么意思？ */
 #include <trace/define_trace.h>
