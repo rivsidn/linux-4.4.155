@@ -86,11 +86,13 @@ Where :
 
 - if you use the header in multiple source files, #define CREATE_TRACE_POINTS
   should appear only in one source file.
+  如果有多个源文件引用了这个头文件，#define CRAETE_TRACE_POINTS 只需要定义一次
 
 Connecting a function (probe) to a tracepoint is done by providing a
 probe (function to call) for the specific tracepoint through
 register_trace_subsys_eventname().  Removing a probe is done through
 unregister_trace_subsys_eventname(); it will remove the probe.
+钩子函数删除，添加.
 
 tracepoint_synchronize_unregister() must be called before the end of
 the module exit function to make sure there is no caller left using

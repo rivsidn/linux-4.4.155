@@ -15,6 +15,7 @@ ftrace.txt file.
 
 Ideally, everyone who wishes to retain performance while supporting tracing in
 their kernel should make it all the way to dynamic ftrace support.
+动态ftrace有利于保持性能.
 
 
 Prerequisites
@@ -46,6 +47,7 @@ is a major issue at this point, especially in relation to the location of the
 mcount call (before/after function prologue).  You might also want to look at
 how glibc has implemented the mcount function for your architecture.  It might
 be (semi-)relevant.
+mcount 调用位置的寄存器使用是此时的主要问题.
 
 The mcount function should check the function pointer ftrace_trace_function
 to see if it is set to ftrace_stub.  If it is, there is nothing for you to do,
@@ -104,7 +106,7 @@ EXPORT_SYMBOL(mcount);
 
 HAVE_FUNCTION_GRAPH_TRACER
 --------------------------
-
+## HERE
 Deep breath ... time to do some real work.  Here you will need to update the
 mcount function to check ftrace graph function pointers, as well as implement
 some functions to save (hijack) and restore the return address.

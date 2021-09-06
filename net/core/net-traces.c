@@ -33,6 +33,7 @@
 #include <trace/events/udp.h>
 #include <trace/events/fib.h>
 
+//外部引用的时候需要从导出
 EXPORT_TRACEPOINT_SYMBOL_GPL(kfree_skb);
 
 EXPORT_TRACEPOINT_SYMBOL_GPL(napi_poll);
