@@ -8,6 +8,7 @@ Please send bug reports to Matt Mackall <mpm@selenic.com>
 Satyam Sharma <satyam.sharma@gmail.com>, and Cong Wang <xiyou.wangcong@gmail.com>
 
 Introduction:
+介绍:
 =============
 
 This module logs kernel printk messages over UDP allowing debugging of
@@ -18,8 +19,10 @@ netconsole initializes immediately after NIC cards and will bring up
 the specified interface as soon as possible. While this doesn't allow
 capture of early kernel panics, it does capture most of the boot
 process.
+该模块通过UDP记录内核的printk日志，该模块可以编译到内核中或者编译成模块。
 
 Sender and receiver configuration:
+接收端和发送端配置
 ==================================
 
 It takes a string configuration parameter "netconsole" in the
@@ -60,6 +63,7 @@ address.
 
 The remote host has several options to receive the kernel messages,
 for example:
+远端设备有多种选择可以用来接受内核消息，比如说:
 
 1) syslogd
 
@@ -77,6 +81,7 @@ for example:
    'socat udp-recv:<port> -'
 
 Dynamic reconfiguration:
+动态重新配置
 ========================
 
 Dynamic reconfigurability is a useful addition to netconsole that enables
@@ -85,6 +90,7 @@ parameters reconfigured at runtime from a configfs-based userspace interface.
 [ Note that the parameters of netconsole targets that were specified/created
 from the boot/module option are not exposed via this interface, and hence
 cannot be modified dynamically. ]
+通过基于configfs 的用户态接口动态添加远程日志接受设备。
 
 To include this feature, select CONFIG_NETCONSOLE_DYNAMIC when building the
 netconsole module (or kernel, if netconsole is built-in).
@@ -136,6 +142,7 @@ useful if you want to use interfaces that have newly come up (and may not
 have existed when netconsole was loaded / initialized).
 
 Extended console:
+拓展串口
 =================
 
 If '+' is prefixed to the configuration line or "extended" config file
@@ -208,3 +215,6 @@ from IRQ contexts as well, and does not enable interrupts while
 sending packets. Due to these unique needs, configuration cannot
 be more automatic, and some fundamental limitations will remain:
 only IP networks, UDP packets and ethernet devices are supported.
+
+只可以输出printk信息。
+
