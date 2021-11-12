@@ -612,6 +612,9 @@ static inline void netdev_queue_numa_node_write(struct netdev_queue *q, int node
  * This structure holds an RPS map which can be of variable length.  The
  * map is an array of CPUs.
  */
+/*
+ * 任意长度的RPS 映射，该映射是CPU 的数组
+ */
 struct rps_map {
 	unsigned int len;
 	struct rcu_head rcu;
@@ -639,6 +642,7 @@ struct rps_dev_flow_table {
 	struct rcu_head rcu;
 	struct rps_dev_flow flows[0];
 };
+/* 流表+流表项个数 */
 #define RPS_DEV_FLOW_TABLE_SIZE(_num) (sizeof(struct rps_dev_flow_table) + \
     ((_num) * sizeof(struct rps_dev_flow)))
 

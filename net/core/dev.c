@@ -3273,6 +3273,7 @@ static inline void ____napi_schedule(struct softnet_data *sd,
 #ifdef CONFIG_RPS
 
 /* One global table that all flow-based protocols share. */
+/* 所有基于流的协议共享一个全局表 */
 struct rps_sock_flow_table __rcu *rps_sock_flow_table __read_mostly;
 EXPORT_SYMBOL(rps_sock_flow_table);
 u32 rps_cpu_mask __read_mostly;
@@ -3341,6 +3342,7 @@ static int get_rps_cpu(struct net_device *dev, struct sk_buff *skb,
 	u32 tcpu;
 	u32 hash;
 
+	/* 获取接收队列 */
 	if (skb_rx_queue_recorded(skb)) {
 		u16 index = skb_get_rx_queue(skb);
 
@@ -3373,10 +3375,13 @@ static int get_rps_cpu(struct net_device *dev, struct sk_buff *skb,
 		u32 ident;
 
 		/* First check into global flow table if there is a match */
+		/* TODO: 怎么理解这段代码？ */
 		ident = sock_flow_table->ents[hash & sock_flow_table->mask];
+		/* ident与hash 在 ~rps_cpu_mask 处的位是否相同，不相同则跳转 */
 		if ((ident ^ hash) & ~rps_cpu_mask)
 			goto try_rps;
 
+		/* 获取CPU号 */
 		next_cpu = ident & rps_cpu_mask;
 
 		/* OK, now we know there is a match,

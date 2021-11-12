@@ -690,12 +690,15 @@ static ssize_t store_rps_map(struct netdev_rx_queue *queue,
 	int err, cpu, i;
 	static DEFINE_MUTEX(rps_map_mutex);
 
+	/* 检查权限 */
 	if (!capable(CAP_NET_ADMIN))
 		return -EPERM;
 
+	/* 申请一个cpu 掩码 */
 	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
 		return -ENOMEM;
 
+	/* cpu 掩码解析 */
 	err = bitmap_parse(buf, len, cpumask_bits(mask), nr_cpumask_bits);
 	if (err) {
 		free_cpumask_var(mask);
@@ -775,6 +778,7 @@ static ssize_t store_rps_dev_flow_table_cnt(struct netdev_rx_queue *queue,
 	if (!capable(CAP_NET_ADMIN))
 		return -EPERM;
 
+	/* 将输入的字符串转换成unsigned long类型 */
 	rc = kstrtoul(buf, 0, &count);
 	if (rc < 0)
 		return rc;
@@ -810,6 +814,7 @@ static ssize_t store_rps_dev_flow_table_cnt(struct netdev_rx_queue *queue,
 	} else
 		table = NULL;
 
+	/* 通过RCU 的方式替换 */
 	spin_lock(&rps_dev_flow_lock);
 	old_table = rcu_dereference_protected(queue->rps_flow_table,
 					      lockdep_is_held(&rps_dev_flow_lock));
