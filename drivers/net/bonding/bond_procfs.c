@@ -313,6 +313,7 @@ void bond_remove_proc_entry(struct bonding *bond)
 void __net_init bond_create_proc_dir(struct bond_net *bn)
 {
 	if (!bn->proc_dir) {
+		/* 创建bonding 文件夹 */
 		bn->proc_dir = proc_mkdir(DRV_NAME, bn->net->proc_net);
 		if (!bn->proc_dir)
 			pr_warn("Warning: Cannot create /proc/net/%s\n",

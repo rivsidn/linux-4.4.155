@@ -3814,6 +3814,9 @@ EXPORT_SYMBOL_GPL(netdev_is_rx_handler_busy);
  *
  *	For a general description of rx_handler, see enum rx_handler_result.
  */
+/*
+ *	注册一个接收函数
+ */
 int netdev_rx_handler_register(struct net_device *dev,
 			       rx_handler_func_t *rx_handler,
 			       void *rx_handler_data)

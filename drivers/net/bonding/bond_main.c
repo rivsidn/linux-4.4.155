@@ -1300,6 +1300,7 @@ void bond_queue_slave_event(struct slave *slave)
 	queue_delayed_work(slave->bond->wq, &nnw->work, 0);
 }
 
+/* bond口添加子接口调用该函数 */
 /* enslave device <slave> to bond device <master> */
 int bond_enslave(struct net_device *bond_dev, struct net_device *slave_dev)
 {
@@ -1626,6 +1627,7 @@ int bond_enslave(struct net_device *bond_dev, struct net_device *slave_dev)
 	if (!(bond_dev->features & NETIF_F_LRO))
 		dev_disable_lro(slave_dev);
 
+	/* 添加报文处理的钩子函数 */
 	res = netdev_rx_handler_register(slave_dev, bond_handle_frame,
 					 new_slave);
 	if (res) {
@@ -4085,6 +4087,7 @@ static const struct ethtool_ops bond_ethtool_ops = {
 	.get_link		= ethtool_op_get_link,
 };
 
+/* bond 口自己的处理函数 */
 static const struct net_device_ops bond_netdev_ops = {
 	.ndo_init		= bond_init,
 	.ndo_uninit		= bond_uninit,
