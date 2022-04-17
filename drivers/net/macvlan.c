@@ -48,7 +48,7 @@ struct macvlan_port {
 	struct work_struct	bc_work;
 	bool 			passthru;
 	int			count;
-	struct hlist_head	vlan_source_hash[MACVLAN_HASH_SIZE];
+	struct hlist_head	vlan_source_hash[MACVLAN_HASH_SIZE];	//macvlan_source_entry{} 链表
 };
 
 struct macvlan_source_entry {
@@ -121,8 +121,7 @@ static struct macvlan_source_entry *macvlan_hash_lookup_source(
 	return NULL;
 }
 
-static int macvlan_hash_add_source(struct macvlan_dev *vlan,
-				   const unsigned char *addr)
+static int macvlan_hash_add_source(struct macvlan_dev *vlan, const unsigned char *addr)
 {
 	struct macvlan_port *port = vlan->port;
 	struct macvlan_source_entry *entry;
@@ -435,6 +434,7 @@ static rx_handler_result_t macvlan_handle_frame(struct sk_buff **pskb)
 		return RX_HANDLER_PASS;
 	}
 
+	/* 按照源mac转发报文，适用与source模式 */
 	macvlan_forward_source(skb, port, eth->h_source);
 	if (port->passthru)
 		vlan = list_first_or_null_rcu(&port->vlans,
@@ -444,6 +444,9 @@ static rx_handler_result_t macvlan_handle_frame(struct sk_buff **pskb)
 	if (!vlan || vlan->mode == MACVLAN_MODE_SOURCE)
 		return RX_HANDLER_PASS;
 
+	/*
+	 * 执行到此处，表示报文是到该虚拟设备，如果设备没up，则丢弃
+	 */
 	dev = vlan->dev;
 	if (unlikely(!(dev->flags & IFF_UP))) {
 		kfree_skb(skb);
@@ -457,6 +460,7 @@ static rx_handler_result_t macvlan_handle_frame(struct sk_buff **pskb)
 		goto out;
 	}
 
+	/* 替换成虚拟设备，然后重新执行收包流程 */
 	*pskb = skb;
 	skb->dev = dev;
 	skb->pkt_type = PACKET_HOST;
@@ -1099,6 +1103,7 @@ static int macvlan_port_create(struct net_device *dev)
 	skb_queue_head_init(&port->bc_queue);
 	INIT_WORK(&port->bc_work, macvlan_process_broadcast);
 
+	/* 此处的设备对应实际的物理设备 */
 	err = netdev_rx_handler_register(dev, macvlan_handle_frame, port);
 	if (err)
 		kfree(port);

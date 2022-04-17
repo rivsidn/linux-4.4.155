@@ -405,6 +405,7 @@ static int __init synproxy_core_init(void)
 {
 	int err;
 
+	/* 注册链接跟踪拓展 */
 	err = nf_ct_extend_register(&nf_ct_synproxy_extend);
 	if (err < 0)
 		goto err1;

@@ -35,7 +35,7 @@ struct macvtap_queue;
 #define MACVLAN_MC_FILTER_SZ	(1 << MACVLAN_MC_FILTER_BITS)
 
 struct macvlan_dev {
-	struct net_device	*dev;
+	struct net_device	*dev;		//虚拟的macvlan 设备
 	struct list_head	list;
 	struct hlist_node	hlist;
 	struct macvlan_port	*port;

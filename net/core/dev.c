@@ -3901,6 +3901,7 @@ static int __netif_receive_skb_core(struct sk_buff *skb, bool pfmemalloc)
 
 	net_timestamp_check(!netdev_tstamp_prequeue, skb);
 
+	/* 报文追踪 */
 	trace_netif_receive_skb(skb);
 
 	orig_dev = skb->dev;
@@ -3934,6 +3935,7 @@ another_round:
 	if (pfmemalloc)
 		goto skip_taps;
 
+	/* 为什么通过这种方式遍历？ */
 	list_for_each_entry_rcu(ptype, &ptype_all, list) {
 		if (pt_prev)
 			ret = deliver_skb(skb, pt_prev, orig_dev);

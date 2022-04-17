@@ -276,6 +276,7 @@ synproxy_tg4(struct sk_buff *skb, const struct xt_action_param *par)
 	if (!synproxy_parse_options(skb, par->thoff, th, &opts))
 		return NF_DROP;
 
+	/* 只设置了syn标志位 */
 	if (th->syn && !(th->ack || th->fin || th->rst)) {
 		/* Initial SYN from client */
 		this_cpu_inc(snet->stats->syn_received);
@@ -294,7 +295,7 @@ synproxy_tg4(struct sk_buff *skb, const struct xt_action_param *par)
 		synproxy_send_client_synack(snet, skb, th, &opts);
 		return NF_DROP;
 
-	} else if (th->ack && !(th->fin || th->rst || th->syn)) {
+	} else if (th->ack && !(th->fin || th->rst || th->syn)) {		//只设置了ack标识位
 		/* ACK from client */
 		synproxy_recv_client_ack(snet, skb, th, &opts, ntohl(th->seq));
 		return NF_DROP;
@@ -407,6 +408,7 @@ static unsigned int ipv4_synproxy_hook(void *priv,
 	return NF_ACCEPT;
 }
 
+/* 表项添加时候检查 */
 static int synproxy_tg4_check(const struct xt_tgchk_param *par)
 {
 	const struct ipt_entry *e = par->entryinfo;
@@ -418,11 +420,13 @@ static int synproxy_tg4_check(const struct xt_tgchk_param *par)
 	return nf_ct_l3proto_try_module_get(par->family);
 }
 
+/* 表项删除时候调用 */
 static void synproxy_tg4_destroy(const struct xt_tgdtor_param *par)
 {
 	nf_ct_l3proto_module_put(par->family);
 }
 
+/* 添加到filter 表的INPUT、FORWARD 链 */
 static struct xt_target synproxy_tg4_reg __read_mostly = {
 	.name		= "SYNPROXY",
 	.family		= NFPROTO_IPV4,
@@ -434,6 +438,7 @@ static struct xt_target synproxy_tg4_reg __read_mostly = {
 	.me		= THIS_MODULE,
 };
 
+/* 注册netfilter钩子函数，优先级略高于会话确认 */
 static struct nf_hook_ops ipv4_synproxy_ops[] __read_mostly = {
 	{
 		.hook		= ipv4_synproxy_hook,
@@ -453,11 +458,13 @@ static int __init synproxy_tg4_init(void)
 {
 	int err;
 
+	/* 注册钩子函数 */
 	err = nf_register_hooks(ipv4_synproxy_ops,
 				ARRAY_SIZE(ipv4_synproxy_ops));
 	if (err < 0)
 		goto err1;
 
+	/* 注册target */
 	err = xt_register_target(&synproxy_tg4_reg);
 	if (err < 0)
 		goto err2;
