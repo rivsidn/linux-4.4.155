@@ -763,6 +763,7 @@ static struct xfrm4_protocol esp4_protocol = {
 
 static int __init esp4_init(void)
 {
+	/* 此处这两个函数用处？ */
 	if (xfrm_register_type(&esp_type, AF_INET) < 0) {
 		pr_info("%s: can't add xfrm type\n", __func__);
 		return -EAGAIN;
