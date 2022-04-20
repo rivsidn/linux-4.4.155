@@ -740,6 +740,7 @@ static int esp4_rcv_cb(struct sk_buff *skb, int err)
 	return 0;
 }
 
+/* 封装接口，上层调用 */
 static const struct xfrm_type esp_type =
 {
 	.description	= "ESP4",
@@ -748,26 +749,26 @@ static const struct xfrm_type esp_type =
 	.flags		= XFRM_TYPE_REPLAY_PROT,
 	.init_state	= esp_init_state,
 	.destructor	= esp_destroy,
-	.get_mtu	= esp4_get_mtu,
 	.input		= esp_input,
 	.output		= esp_output
+	.get_mtu	= esp4_get_mtu,
 };
 
 static struct xfrm4_protocol esp4_protocol = {
-	.handler	=	xfrm4_rcv,
-	.input_handler	=	xfrm_input,
-	.cb_handler	=	esp4_rcv_cb,
-	.err_handler	=	esp4_err,
-	.priority	=	0,
+	.handler	=	xfrm4_rcv,	//处理后调用xfrm_input() 函数
+	.input_handler	=	xfrm_input,	//处理UDP收到的加密包
+	.cb_handler	=	esp4_rcv_cb,	//解密结束之后调用该函数
+	.err_handler	=	esp4_err,	//异常回复icmp报文时候调用
+	.priority	=	0,		//通过优先级确认挂载到链表中位置
 };
 
 static int __init esp4_init(void)
 {
-	/* 此处这两个函数用处？ */
 	if (xfrm_register_type(&esp_type, AF_INET) < 0) {
 		pr_info("%s: can't add xfrm type\n", __func__);
 		return -EAGAIN;
 	}
+	/* 注册链表，添加四层收包钩子函数 */
 	if (xfrm4_protocol_register(&esp4_protocol, IPPROTO_ESP) < 0) {
 		pr_info("%s: can't add protocol\n", __func__);
 		xfrm_unregister_type(&esp_type, AF_INET);

@@ -21,6 +21,7 @@ static struct kmem_cache *secpath_cachep __read_mostly;
 static DEFINE_SPINLOCK(xfrm_input_afinfo_lock);
 static struct xfrm_input_afinfo __rcu *xfrm_input_afinfo[NPROTO];
 
+/* 添加结构体到指针数组中 */
 int xfrm_input_register_afinfo(struct xfrm_input_afinfo *afinfo)
 {
 	int err = 0;
@@ -39,6 +40,7 @@ int xfrm_input_register_afinfo(struct xfrm_input_afinfo *afinfo)
 }
 EXPORT_SYMBOL(xfrm_input_register_afinfo);
 
+/* 从指针数组中将结构体移除 */
 int xfrm_input_unregister_afinfo(struct xfrm_input_afinfo *afinfo)
 {
 	int err = 0;
@@ -179,6 +181,7 @@ int xfrm_prepare_input(struct xfrm_state *x, struct sk_buff *skb)
 }
 EXPORT_SYMBOL(xfrm_prepare_input);
 
+/* 查询state，转移到上层处理 */
 int xfrm_input(struct sk_buff *skb, int nexthdr, __be32 spi, int encap_type)
 {
 	struct net *net = dev_net(skb->dev);
@@ -259,8 +262,7 @@ int xfrm_input(struct sk_buff *skb, int nexthdr, __be32 spi, int encap_type)
 			if (x->km.state == XFRM_STATE_ACQ)
 				XFRM_INC_STATS(net, LINUX_MIB_XFRMACQUIREERROR);
 			else
-				XFRM_INC_STATS(net,
-					       LINUX_MIB_XFRMINSTATEINVALID);
+				XFRM_INC_STATS(net, LINUX_MIB_XFRMINSTATEINVALID);
 			goto drop_unlock;
 		}
 
@@ -371,6 +373,7 @@ resume:
 
 	if (decaps) {
 		skb_dst_drop(skb);
+		/* 解密之后，报文重新递交到协议站入口函数执行 */
 		netif_rx(skb);
 		return 0;
 	} else {

@@ -1347,6 +1347,14 @@ struct xfrm_algo_desc {
 };
 
 /* XFRM protocol handlers.  */
+/*
+ * handler	  收包处理函数
+ * input_handler  收包处理函数，用于处理udp 收到的加密包
+ * cb_handler	  解密结束之后调用该函数
+ * err_handler	  异常时，回复ICMP报文调用
+ * next		  指针，形成一个单链表
+ * priority	  优先级，通过优先级确认单链表中的位置
+ */
 struct xfrm4_protocol {
 	int (*handler)(struct sk_buff *skb);
 	int (*input_handler)(struct sk_buff *skb, int nexthdr, __be32 spi,

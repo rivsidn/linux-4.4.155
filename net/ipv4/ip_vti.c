@@ -385,7 +385,7 @@ static void __net_init vti_fb_tunnel_init(struct net_device *dev)
 	iph->ihl		= 5;
 }
 
-static struct xfrm4_protocol vti_esp4_protocol __read_mostly = {
+jtatic struct xfrm4_protocol vti_esp4_protocol __read_mostly = {
 	.handler	=	vti_rcv,
 	.input_handler	=	vti_input,
 	.cb_handler	=	vti_rcv_cb,

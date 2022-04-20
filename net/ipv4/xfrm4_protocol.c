@@ -22,11 +22,13 @@
 #include <net/protocol.h>
 #include <net/xfrm.h>
 
+/* 指针，xfrm4_protocol 中含有一个next 指针，形成一个单链表 */
 static struct xfrm4_protocol __rcu *esp4_handlers __read_mostly;
 static struct xfrm4_protocol __rcu *ah4_handlers __read_mostly;
 static struct xfrm4_protocol __rcu *ipcomp4_handlers __read_mostly;
 static DEFINE_MUTEX(xfrm4_protocol_mutex);
 
+/* 通过protocol 获取对应协议 */
 static inline struct xfrm4_protocol __rcu **proto_handlers(u8 protocol)
 {
 	switch (protocol) {
@@ -89,6 +91,7 @@ out:
 }
 EXPORT_SYMBOL(xfrm4_rcv_encap);
 
+/* 四层收包函数接口 */
 static int xfrm4_esp_rcv(struct sk_buff *skb)
 {
 	int ret;
@@ -96,10 +99,12 @@ static int xfrm4_esp_rcv(struct sk_buff *skb)
 
 	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4 = NULL;
 
+	/* 遍历链表，将报文递交给处理函数 */
 	for_each_protocol_rcu(esp4_handlers, handler)
 		if ((ret = handler->handler(skb)) != -EINVAL)
 			return ret;
 
+	/* 如果没有对应的处理函数，则回复ICMP报文 */
 	icmp_send(skb, ICMP_DEST_UNREACH, ICMP_PORT_UNREACH, 0);
 
 	kfree_skb(skb);
@@ -167,6 +172,7 @@ static void xfrm4_ipcomp_err(struct sk_buff *skb, u32 info)
 			break;
 }
 
+/* 此处是真正的四层收包函数接口 */
 static const struct net_protocol esp4_protocol = {
 	.handler	=	xfrm4_esp_rcv,
 	.err_handler	=	xfrm4_esp_err,
@@ -222,10 +228,12 @@ int xfrm4_protocol_register(struct xfrm4_protocol *handler,
 
 	mutex_lock(&xfrm4_protocol_mutex);
 
+	/* 如果当前为空，则添加四层收包函数 */
 	if (!rcu_dereference_protected(*proto_handlers(protocol),
 				       lockdep_is_held(&xfrm4_protocol_mutex)))
 		add_netproto = true;
 
+	/* 优先级从高到低排列 */
 	for (pprev = proto_handlers(protocol);
 	     (t = rcu_dereference_protected(*pprev,
 			lockdep_is_held(&xfrm4_protocol_mutex))) != NULL;
@@ -236,6 +244,7 @@ int xfrm4_protocol_register(struct xfrm4_protocol *handler,
 			goto err;
 	}
 
+	/* 添加到链表 */
 	handler->next = *pprev;
 	rcu_assign_pointer(*pprev, handler);
 
@@ -245,6 +254,7 @@ err:
 	mutex_unlock(&xfrm4_protocol_mutex);
 
 	if (add_netproto) {
+		/* 注册四层收包函数 */
 		if (inet_add_protocol(netproto(protocol), protocol)) {
 			pr_err("%s: can't add protocol\n", __func__);
 			ret = -EAGAIN;
