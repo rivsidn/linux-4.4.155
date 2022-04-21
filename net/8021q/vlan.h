@@ -39,6 +39,7 @@ struct vlan_info {
 	struct rcu_head		rcu;
 };
 
+/* vlan协议号与enum vlan_protos{} 建立一一映射 */
 static inline unsigned int vlan_proto_idx(__be16 proto)
 {
 	switch (proto) {
@@ -52,6 +53,7 @@ static inline unsigned int vlan_proto_idx(__be16 proto)
 	}
 }
 
+/* vlan 设备在vlan_group{} 中的指针数组存放 */
 static inline struct net_device *__vlan_group_get_device(struct vlan_group *vg,
 							 unsigned int pidx,
 							 u16 vlan_id)
@@ -70,7 +72,7 @@ static inline struct net_device *vlan_group_get_device(struct vlan_group *vg,
 	return __vlan_group_get_device(vg, vlan_proto_idx(vlan_proto), vlan_id);
 }
 
-/* 此处的dev 不是真实的dev，是vlan 对应的net_device */
+/* 此处的dev 不是真实的物理设备，是vlan 对应的net_device */
 static inline void vlan_group_set_device(struct vlan_group *vg,
 					 __be16 vlan_proto, u16 vlan_id,
 					 struct net_device *dev)

@@ -71,6 +71,7 @@ static int vlan_group_prealloc_vid(struct vlan_group *vg,
 	if (array == NULL)
 		return -ENOBUFS;
 
+	/* 设置指针数组 */
 	vg->vlan_devices_arrays[pidx][vidx] = array;
 	return 0;
 }
@@ -247,6 +248,7 @@ static int register_vlan_device(struct net_device *real_dev, u16 vlan_id)
 		snprintf(name, IFNAMSIZ, "vlan%.4i", vlan_id);
 	}
 
+	/* 申请一个新的net_device{} 设备 */
 	new_dev = alloc_netdev(sizeof(struct vlan_dev_priv), name,
 			       NET_NAME_UNKNOWN, vlan_setup);
 
@@ -280,6 +282,7 @@ out_free_newdev:
 	return err;
 }
 
+/* TODO:... */
 static void vlan_sync_address(struct net_device *dev,
 			      struct net_device *vlandev)
 {
@@ -743,6 +746,7 @@ static int __init vlan_proto_init(void)
 	if (err < 0)
 		goto err0;
 
+	/* 注册通知链 */
 	err = register_netdevice_notifier(&vlan_notifier_block);
 	if (err < 0)
 		goto err2;
@@ -755,13 +759,16 @@ static int __init vlan_proto_init(void)
 	if (err < 0)
 		goto err4;
 
+	/* 用户态接口(一) */
 	err = vlan_netlink_init();
 	if (err < 0)
 		goto err5;
 
+	/* 注册offload 函数，可以理解成是利用硬件能力降低CPU负载 */
 	for (i = 0; i < ARRAY_SIZE(vlan_packet_offloads); i++)
 		dev_add_offload(&vlan_packet_offloads[i]);
 
+	/* 用户态接口(二) */
 	vlan_ioctl_set(vlan_ioctl_handler);
 	return 0;
 

@@ -335,6 +335,7 @@ static void macvtap_del_queues(struct net_device *dev)
 	vlan->numvtaps = MAX_MACVTAP_QUEUES;
 }
 
+/* macvtap 收包入口函数 */
 static rx_handler_result_t macvtap_handle_frame(struct sk_buff **pskb)
 {
 	struct sk_buff *skb = *pskb;
@@ -461,12 +462,17 @@ static int macvtap_newlink(struct net *src_net,
 	 */
 	vlan->tap_features = TUN_OFFLOADS;
 
+	/* 此处dev对应虚拟的maclvan设备 */
 	err = netdev_rx_handler_register(dev, macvtap_handle_frame, vlan);
 	if (err)
 		return err;
 
 	/* Don't put anything that may fail after macvlan_common_newlink
 	 * because we can't undo what it does.
+	 */
+	/*
+	 * 给实际的物理接口挂钩子函数，收包之后会先通过macvlan 设备收包流程处理；
+	 * 递交到macvtap 时候，调用到macvtap_handle_frame 函数
 	 */
 	return macvlan_common_newlink(src_net, dev, tb, data);
 }
@@ -491,7 +497,6 @@ static struct rtnl_link_ops macvtap_link_ops __read_mostly = {
 	.newlink	= macvtap_newlink,
 	.dellink	= macvtap_dellink,
 };
-
 
 static void macvtap_sock_write_space(struct sock *sk)
 {
@@ -523,6 +528,7 @@ static int macvtap_open(struct inode *inode, struct file *file)
 	if (!dev)
 		goto out;
 
+	/* 使用了socket 的缓冲队列 */
 	err = -ENOMEM;
 	q = (struct macvtap_queue *)sk_alloc(net, AF_UNSPEC, GFP_KERNEL,
 					     &macvtap_proto, 0);

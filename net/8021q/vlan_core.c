@@ -16,6 +16,7 @@ bool vlan_do_receive(struct sk_buff **skbp)
 	struct net_device *vlan_dev;
 	struct vlan_pcpu_stats *rx_stats;
 
+	/* 获取对应的vlan设备 */
 	vlan_dev = vlan_find_dev(skb->dev, vlan_proto, vlan_id);
 	if (!vlan_dev)
 		return false;
@@ -87,10 +88,10 @@ struct net_device *__vlan_find_dev_deep_rcu(struct net_device *dev,
 		 * Lower devices of master uppers (bonding, team) do not have
 		 * grp assigned to themselves. Grp is assigned to upper device
 		 * instead.
-		 * 主设备的底层设备没有跟grp绑定，master跟grp绑定的.
 		 */
 		struct net_device *upper_dev;
 
+		/* 获取上层设备 */
 		upper_dev = netdev_master_upper_dev_get_rcu(dev);
 		if (upper_dev)
 			return __vlan_find_dev_deep_rcu(upper_dev,
@@ -113,12 +114,14 @@ struct net_device *vlan_dev_real_dev(const struct net_device *dev)
 }
 EXPORT_SYMBOL(vlan_dev_real_dev);
 
+/* 获取vlan_id */
 u16 vlan_dev_vlan_id(const struct net_device *dev)
 {
 	return vlan_dev_priv(dev)->vlan_id;
 }
 EXPORT_SYMBOL(vlan_dev_vlan_id);
 
+/* 获取vlan协议 */
 __be16 vlan_dev_vlan_proto(const struct net_device *dev)
 {
 	return vlan_dev_priv(dev)->vlan_proto;
@@ -164,13 +167,13 @@ static struct vlan_info *vlan_info_alloc(struct net_device *dev)
 }
 
 struct vlan_vid_info {
-	struct list_head list;
-	__be16 proto;
-	u16 vid;
-	int refcount;
+	struct list_head list;	//链表
+	__be16 proto;		//协议号
+	u16 vid;		//vlan id
+	int refcount;		//引用计数
 };
 
-/* 是否具有硬件过滤能力 */
+/* 根据协议封装类型、硬件属性判断，是否具有硬件过滤能力 */
 static bool vlan_hw_filter_capable(const struct net_device *dev,
 				     const struct vlan_vid_info *vid_info)
 {
@@ -240,8 +243,8 @@ static int __vlan_vid_add(struct vlan_info *vlan_info, __be16 proto, u16 vid,
 
 /*
  * 给设备添加vlan.
- * 1. 添加vlan_info{}
- * 2. 在vlan_info{} 中添加vid_info{}
+ * 1. 创建vlan_info{}
+ * 2. 在vlan_info{} 中添加vlan_vid_info{}
  */
 int vlan_vid_add(struct net_device *dev, __be16 proto, u16 vid)
 {
@@ -265,6 +268,7 @@ int vlan_vid_add(struct net_device *dev, __be16 proto, u16 vid)
 		if (err)
 			goto out_free_vlan_info;
 	}
+	/* 添加多遍的时候，增加引用计数 */
 	vid_info->refcount++;
 
 	if (vlan_info_created)
