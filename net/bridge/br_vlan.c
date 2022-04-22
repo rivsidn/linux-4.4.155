@@ -40,6 +40,7 @@ static void __vlan_add_pvid(struct net_bridge_vlan_group *vg, u16 vid)
 	vg->pvid = vid;
 }
 
+/* 设置pvid 为0 */
 static void __vlan_delete_pvid(struct net_bridge_vlan_group *vg, u16 vid)
 {
 	if (vg->pvid != vid)
@@ -49,6 +50,7 @@ static void __vlan_delete_pvid(struct net_bridge_vlan_group *vg, u16 vid)
 	vg->pvid = 0;
 }
 
+/* 设置vlan标识位 */
 static void __vlan_add_flags(struct net_bridge_vlan *v, u16 flags)
 {
 	struct net_bridge_vlan_group *vg;
@@ -117,6 +119,11 @@ static void __vlan_del_list(struct net_bridge_vlan *v)
 	list_del_rcu(&v->vlist);
 }
 
+/*
+ * dev 桥端口设备
+ * br  桥设备
+ * vid vlan id
+ */
 static int __vlan_vid_del(struct net_device *dev, struct net_bridge *br,
 			  u16 vid)
 {
@@ -132,6 +139,7 @@ static int __vlan_vid_del(struct net_device *dev, struct net_bridge *br,
 	 */
 	err = switchdev_port_obj_del(dev, &v.obj);
 	if (err == -EOPNOTSUPP) {
+		/* 调用802.1Q下代码，删除vlan */
 		vlan_vid_del(dev, br->vlan_proto, vid);
 		return 0;
 	}
@@ -190,7 +198,12 @@ static void br_vlan_put_master(struct net_bridge_vlan *masterv)
  *    will be used for filtering in both the port and the bridge
  */
 /*
- * TODO: next...
+ * 桥和桥端口共享的VLAN添加函数，总共有四种可能：
+ * 1. vlan 添加到端口中
+ * 2. vlan 添加到桥上
+ * 3. vlan 添加到端口
+ * 4. 与3 情况相同，但是master和brentry 表示位置都设置了，所以该表项会被
+ *    用于过滤桥和端口
  */
 static int __vlan_add(struct net_bridge_vlan *v, u16 flags)
 {
@@ -212,6 +225,7 @@ static int __vlan_add(struct net_bridge_vlan *v, u16 flags)
 		vg = nbp_vlan_group(p);
 	}
 
+	/* 添加到端口的情况 */
 	if (p) {
 		/* Add VLAN to the device filter if it is supported.
 		 * This ensures tagged traffic enters the bridge when
@@ -232,6 +246,7 @@ static int __vlan_add(struct net_bridge_vlan *v, u16 flags)
 		masterv = br_vlan_get_master(br, v->vid);
 		if (!masterv)
 			goto out_filt;
+		/* 没设置MASTER 标识的时候，指向MASTER 的表项 */
 		v->brvlan = masterv;
 	}
 
@@ -280,6 +295,7 @@ static int __vlan_del(struct net_bridge_vlan *v)
 	struct net_bridge_port *p = NULL;
 	int err = 0;
 
+	/* vlan是配置在桥上还是桥接口 */
 	if (br_vlan_is_master(v)) {
 		vg = br_vlan_group(v->br);
 	} else {
@@ -372,6 +388,7 @@ static bool __allowed_ingress(struct net_bridge_vlan_group *vg, __be16 proto,
 	const struct net_bridge_vlan *v;
 	bool tagged;
 
+	/* 允许vlan过滤 */
 	BR_INPUT_SKB_CB(skb)->vlan_filtered = true;
 	/* If vlan tx offload is disabled on bridge device and frame was
 	 * sent from vlan device on the bridge device, it does not have
@@ -451,9 +468,9 @@ bool br_allowed_ingress(const struct net_bridge *br,
 	/*
 	 * If VLAN filtering is disabled on the bridge, all packets are
 	 * permitted.
-	 * 如果VLAN 过滤在该桥上是禁止的，允许所有包通过.
 	 */
 	if (!br->vlan_enabled) {
+		/* 允许vlan过滤，全部放通 */
 		BR_INPUT_SKB_CB(skb)->vlan_filtered = false;
 		return true;
 	}
@@ -522,6 +539,7 @@ int br_vlan_add(struct net_bridge *br, u16 vid, u16 flags)
 
 	ASSERT_RTNL();
 
+	/* net_bridge_vlan_group{} 中查找vlan */
 	vg = br_vlan_group(br);
 	vlan = br_vlan_find(vg, vid);
 	if (vlan) {
@@ -899,11 +917,11 @@ err_rhtbl:
 	goto out;
 }
 
-/* 桥口vlan初始化 */
+/* 添加桥口的时候，初始化vlan结构体 */
 int nbp_vlan_init(struct net_bridge_port *p)
 {
 	/*
-	 * 桥和桥中的端口都对应 net_bridege_vlan_group{} 结构体
+	 * 桥和桥端口都有一个 net_bridege_vlan_group{} 结构体
 	 */
 	struct net_bridge_vlan_group *vg;
 	int ret = -ENOMEM;
@@ -912,11 +930,13 @@ int nbp_vlan_init(struct net_bridge_port *p)
 	if (!vg)
 		goto out;
 
+	/* 初始化hash表 */
 	ret = rhashtable_init(&vg->vlan_hash, &br_vlan_rht_params);
 	if (ret)
 		goto err_rhtbl;
 	INIT_LIST_HEAD(&vg->vlan_list);
 	rcu_assign_pointer(p->vlgrp, vg);
+	/* 如果此时桥有对应的pvid，则添加到桥端口下 */
 	if (p->br->default_pvid) {
 		ret = nbp_vlan_add(p, p->br->default_pvid,
 				   BRIDGE_VLAN_INFO_PVID |
@@ -988,9 +1008,10 @@ int nbp_vlan_delete(struct net_bridge_port *port, u16 vid)
 	return __vlan_del(v);
 }
 
-/* 删除桥口的时候vlan刷新 */
+/* 桥口删除时同时删除的所有vlan信息 */
 void nbp_vlan_flush(struct net_bridge_port *port)
 {
+	/* 每个桥口下有一个 net_bridge_vlan_group{} */
 	struct net_bridge_vlan_group *vg;
 
 	ASSERT_RTNL();

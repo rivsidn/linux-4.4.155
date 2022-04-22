@@ -104,12 +104,12 @@ struct net_bridge_vlan {
 	u16				vid;
 	u16				flags;
 	union {
-		struct net_bridge	*br;		//桥
-		struct net_bridge_port	*port;		//端口
+		struct net_bridge	*br;		//设置MASTER标识，指向桥设备
+		struct net_bridge_port	*port;		//没设备MASTER标识，指向桥端口
 	};
 	union {
-		atomic_t		refcnt;
-		struct net_bridge_vlan	*brvlan;
+		atomic_t		refcnt;		//设置MASTER标识，是每个桥端口的引用计数
+		struct net_bridge_vlan	*brvlan;	//没设置MASTER标识，指向全局的vlan表项
 	};
 	struct list_head		vlist;
 
@@ -131,7 +131,7 @@ struct net_bridge_vlan {
  *            if there're "real" entries in the bridge please test @num_vlans
  */
 struct net_bridge_vlan_group {
-	struct rhashtable		vlan_hash;	//vlan hash 表
+	struct rhashtable		vlan_hash;	//vlan hash 表，net_bridge_vlan{} 结构体
 	struct list_head		vlan_list;	//vlan 链表
 	u16				num_vlans;	//vlan 个数
 	u16				pvid;		//不带vlan tag 报文的默认vlan
@@ -342,9 +342,9 @@ struct net_bridge
 	u32				auto_cnt;
 #ifdef CONFIG_BRIDGE_VLAN_FILTERING
 	struct net_bridge_vlan_group	__rcu *vlgrp;
-	u8				vlan_enabled;
+	u8				vlan_enabled;		//是否使能vlan过滤
 	__be16				vlan_proto;		//协议号
-	u16				default_pvid;
+	u16				default_pvid;		//pvid
 #endif
 };
 
@@ -393,14 +393,12 @@ static inline int br_is_root_bridge(const struct net_bridge *br)
 }
 
 /* check if a VLAN entry is global */
-/* 检查vlan 表项是不是全局的 */
 static inline bool br_vlan_is_master(const struct net_bridge_vlan *v)
 {
 	return v->flags & BRIDGE_VLAN_INFO_MASTER;
 }
 
 /* check if a VLAN entry is used by the bridge */
-/* 检查vlan 表项是不是只被桥使用 */
 static inline bool br_vlan_is_brentry(const struct net_bridge_vlan *v)
 {
 	return v->flags & BRIDGE_VLAN_INFO_BRENTRY;
@@ -748,6 +746,7 @@ static inline int br_vlan_get_tag(const struct sk_buff *skb, u16 *vid)
 {
 	int err = 0;
 
+	/* 获取vlan id */
 	if (skb_vlan_tag_present(skb)) {
 		*vid = skb_vlan_tag_get(skb) & VLAN_VID_MASK;
 	} else {

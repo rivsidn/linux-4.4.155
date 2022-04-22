@@ -282,7 +282,6 @@ out_free_newdev:
 	return err;
 }
 
-/* TODO:... */
 static void vlan_sync_address(struct net_device *dev,
 			      struct net_device *vlandev)
 {
@@ -364,6 +363,7 @@ static int vlan_device_event(struct notifier_block *unused, unsigned long event,
 	bool last = false;
 	LIST_HEAD(list);
 
+	/* 如果是vlan设备 */
 	if (is_vlan_dev(dev)) {
 		int err = __vlan_device_event(dev, event);
 
