@@ -1311,6 +1311,10 @@ static inline struct sk_buff *skb_share_check(struct sk_buff *skb, gfp_t pri)
 	if (skb_shared(skb)) {
 		struct sk_buff *nskb = skb_clone(skb, pri);
 
+		/*
+		 * consume_skb()、kfree_skb() 这两个函数实际是一样的。
+		 * 不管是否申请到内存，都递减之前的引用计数，将当前skb设置成刚申请的。
+		 */
 		if (likely(nskb))
 			consume_skb(skb);
 		else

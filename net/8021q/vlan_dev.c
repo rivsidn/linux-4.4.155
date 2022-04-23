@@ -122,11 +122,13 @@ static netdev_tx_t vlan_dev_hard_start_xmit(struct sk_buff *skb,
 		__vlan_hwaccel_put_tag(skb, vlan->vlan_proto, vlan_tci);
 	}
 
+	/* 设置成真实的物理设备 */
 	skb->dev = vlan->real_dev;
 	len = skb->len;
 	if (unlikely(netpoll_tx_running(dev)))
 		return vlan_netpoll_send_skb(vlan, skb);
 
+	/* 调用真实物理设备的报文发送函数 */
 	ret = dev_queue_xmit(skb);
 
 	if (likely(ret == NET_XMIT_SUCCESS || ret == NET_XMIT_CN)) {

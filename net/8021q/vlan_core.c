@@ -25,6 +25,7 @@ bool vlan_do_receive(struct sk_buff **skbp)
 	if (unlikely(!skb))
 		return false;
 
+	/* 收包设备设置成对应的vlan 设备 */
 	skb->dev = vlan_dev;
 	if (unlikely(skb->pkt_type == PACKET_OTHERHOST)) {
 		/*
