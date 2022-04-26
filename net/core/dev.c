@@ -3918,6 +3918,7 @@ another_round:
 
 	__this_cpu_inc(softnet_data.processed);
 
+	/* 如果此时收上来的包数据中带有vlan tag，则剥掉vlan tag */
 	if (skb->protocol == cpu_to_be16(ETH_P_8021Q) ||
 	    skb->protocol == cpu_to_be16(ETH_P_8021AD)) {
 		skb = skb_vlan_untag(skb);

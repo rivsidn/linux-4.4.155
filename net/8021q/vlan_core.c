@@ -59,9 +59,11 @@ bool vlan_do_receive(struct sk_buff **skbp)
 		skb_reset_mac_len(skb);
 	}
 
+	/* 此处将vlan_tci 设置成0，后续skb_vlan_tag_present() 获取数值为0 */
 	skb->priority = vlan_get_ingress_priority(vlan_dev, skb->vlan_tci);
 	skb->vlan_tci = 0;
 
+	/* 更新统计信息 */
 	rx_stats = this_cpu_ptr(vlan_dev_priv(vlan_dev)->vlan_pcpu_stats);
 
 	//更新统计信息

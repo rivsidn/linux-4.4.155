@@ -381,6 +381,9 @@ int ip_rcv(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, 
 	/* When the interface is in promisc. mode, drop all the crap
 	 * that it receives, do not try to analyse it.
 	 */
+	/*
+	 * 当接口是混杂模式收上来的包的时候，会在此处丢弃.
+	 */
 	if (skb->pkt_type == PACKET_OTHERHOST)
 		goto drop;
 

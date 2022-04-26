@@ -437,6 +437,13 @@ static int arp_filter(__be32 sip, __be32 tip, struct net_device *dev)
 	/*unsigned long now; */
 	struct net *net = dev_net(dev);
 
+	/*
+	 * 使能arp filter的时候，回复arp的时候会查路由，如果如果路由出口和实际的收包口不一致，
+	 * 则不会回复arp(类似与反向路由检查).
+	 * 这里会导致一个问题就是，如果物理口上设置了vlan，此时vlan和物理口设置了相同网段的IP，
+	 * 此时查询路由的时候，有可能查询到物理口，也有可能到vlan口，如果查到了物理口，则此时
+	 * 不会回复arp.
+	 */
 	rt = ip_route_output(net, sip, tip, 0, l3mdev_master_ifindex_rcu(dev));
 	if (IS_ERR(rt))
 		return 1;
