@@ -231,6 +231,9 @@ static int __vlan_add(struct net_bridge_vlan *v, u16 flags)
 		 * This ensures tagged traffic enters the bridge when
 		 * promiscuous mode is disabled by br_manage_promisc().
 		 */
+		/*
+		 * 如果设备支持vlan过滤，需要调用接口，使能物理网卡vlan过滤功能
+		 */
 		err = __vlan_vid_add(dev, br, v->vid, flags);
 		if (err)
 			goto out;
@@ -243,6 +246,7 @@ static int __vlan_add(struct net_bridge_vlan *v, u16 flags)
 				goto out_filt;
 		}
 
+		/* 如果masterv 不存在，会在该函数内创建 */
 		masterv = br_vlan_get_master(br, v->vid);
 		if (!masterv)
 			goto out_filt;
@@ -252,6 +256,7 @@ static int __vlan_add(struct net_bridge_vlan *v, u16 flags)
 
 	/* Add the dev mac and count the vlan only if it's usable */
 	if (br_vlan_should_use(v)) {
+		/* 插入fdb表 */
 		err = br_fdb_insert(br, p, dev->dev_addr, v->vid);
 		if (err) {
 			br_err(br, "failed insert local address into bridge forwarding table\n");
@@ -344,6 +349,7 @@ static void __vlan_flush(struct net_bridge_vlan_group *vg)
 		__vlan_del(vlan);
 }
 
+/* 发送出去的报文是否带vlan tag 在该函数中处理 */
 struct sk_buff *br_handle_vlan(struct net_bridge *br,
 			       struct net_bridge_vlan_group *vg,
 			       struct sk_buff *skb)
@@ -460,7 +466,7 @@ drop:
 	return false;
 }
 
-/* vlan 过滤，是否允许报文进入 */
+/* vid 此时为输出参数 */
 bool br_allowed_ingress(const struct net_bridge *br,
 			struct net_bridge_vlan_group *vg, struct sk_buff *skb,
 			u16 *vid)
@@ -566,6 +572,7 @@ int br_vlan_add(struct net_bridge *br, u16 vid, u16 flags)
 	if (!vlan)
 		return -ENOMEM;
 
+	/* 此时设置了 MASTER 标识位，表示是桥设备添加的vlan */
 	vlan->vid = vid;
 	vlan->flags = flags | BRIDGE_VLAN_INFO_MASTER;
 	vlan->flags &= ~BRIDGE_VLAN_INFO_PVID;
@@ -771,7 +778,6 @@ static void br_vlan_disable_default_pvid(struct net_bridge *br)
 	br->default_pvid = 0;
 }
 
-/* 设置默认的pvid */
 int __br_vlan_set_default_pvid(struct net_bridge *br, u16 pvid)
 {
 	const struct net_bridge_vlan *pvent;

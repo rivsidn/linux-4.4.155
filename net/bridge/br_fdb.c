@@ -554,6 +554,9 @@ static int fdb_insert(struct net_bridge *br, struct net_bridge_port *source,
 }
 
 /* Add entry for local address of interface */
+/*
+ * 当source 为NULL 时，表示添加的是到本机的fdb表
+ */
 int br_fdb_insert(struct net_bridge *br, struct net_bridge_port *source,
 		  const unsigned char *addr, u16 vid)
 {
