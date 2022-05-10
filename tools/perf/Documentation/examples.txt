@@ -8,6 +8,7 @@
 
 First, discovery/enumeration of available counters can be done via
 'perf list':
+首先列出所有可用的计数器:
 
 titan:~> perf list
   [...]
@@ -43,6 +44,7 @@ run' are:
 
 You can observe the statistical properties as well, by using the
 'repeat the workload N times' feature of perf stat:
+可以运行多次，最后得出统计数据
 
  titan:~> perf stat --repeat 5 -e kmem:mm_page_pcpu_drain -e
    kmem:mm_page_alloc -e kmem:mm_page_free_batched -e
@@ -65,6 +67,7 @@ You can observe the statistical properties as well, by using the
 Furthermore, these tracepoints can be used to sample the workload as
 well. For example the page allocations done by a 'git gc' can be
 captured the following way:
+通过下边动作捕捉'git gc'执行时候的页申请动作:
 
  titan:~/git> perf record -e kmem:mm_page_alloc -c 1 ./git gc
  Counting objects: 1148, done.
@@ -75,6 +78,7 @@ captured the following way:
  [ perf record: Captured and wrote 0.267 MB perf.data (~11679 samples) ]
 
 To check which functions generated page allocations:
+检查申请内存页的功能:
 
  titan:~/git> perf report
  # Samples: 10646
@@ -100,6 +104,7 @@ To check which functions generated page allocations:
      0.64%       git-repack  /usr/lib64/libz.so.1.2.3
 
 Or to see it on a more finegrained level:
+更细致的查看信息
 
 titan:~/git> perf report --sort comm,dso,symbol
 # Samples: 10646
@@ -119,6 +124,7 @@ titan:~/git> perf report --sort comm,dso,symbol
 Furthermore, call-graph sampling can be done too, of page
 allocations - to see precisely what kind of page allocations there
 are:
+可以查看调用栈:
 
  titan:~/git> perf record -g -e kmem:mm_page_alloc -c 1 ./git gc
  Counting objects: 1148, done.
@@ -156,6 +162,7 @@ are:
 
 Or you can observe the whole system's page allocations for 10
 seconds:
+检测系统范围内的页面申请动作，持续时间10秒
 
 titan:~/git> perf stat -a -e kmem:mm_page_pcpu_drain -e
 kmem:mm_page_alloc -e kmem:mm_page_free_batched -e
@@ -172,6 +179,7 @@ kmem:mm_page_free sleep 10
 
 Or observe how fluctuating the page allocations are, via statistical
 analysis done over ten 1-second intervals:
+执行10次，每次一秒，检测页面申请波动:
 
  titan:~/git> perf stat --repeat 10 -a -e kmem:mm_page_pcpu_drain -e
    kmem:mm_page_alloc -e kmem:mm_page_free_batched -e
@@ -188,6 +196,7 @@ analysis done over ten 1-second intervals:
 
 Or you can annotate the recorded 'git gc' run on a per symbol basis
 and check which instructions/source-code generated page allocations:
+可以对函数加注释，看看生成页申请的指令/源码:
 
  titan:~/git> perf annotate __GI___fork
  ------------------------------------------------
